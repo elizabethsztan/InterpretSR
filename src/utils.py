@@ -56,7 +56,16 @@ def load_existing_weights_auto(file, target_model):
     Returns:
         Dict of adapted weights that can be loaded into target_model
     """
+    # Load source weights to check their structure
+    source_state_dict = torch.load(file)
     target_state_dict = target_model.state_dict()
+    
+    # Check if source weights are already from wrapped models
+    source_has_wrapped = any(".InterpretSR_MLP." in key for key in source_state_dict.keys())
+    
+    if source_has_wrapped:
+        # Source is already wrapped, return as-is
+        return source_state_dict
     
     # Find all MLP_SR wrapped parameters in target model
     wrapped_paths = {}
