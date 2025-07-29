@@ -8,33 +8,15 @@ MLPs and their wrapped counterparts.
 
 import torch
 
-def load_existing_weights(file, mlp_mappings=None):
+def _load_existing_weights(file, mlp_mappings=None):
     """
     Load weights from a model and adapt them for architectures with MLP_SR wrappers.
+    This function is used in the main weight loading function load_existing_weights_auto.
     
     Args:
         file: Path to the saved model weights
         mlp_mappings: Dict mapping original MLP paths to their wrapped versions.
                      If None, defaults to simple case: {"mlp.": "mlp.InterpretSR_MLP."}
-                     
-    Examples:
-        Simple case (backward compatible)::
-        
-            load_existing_weights("model.pth")
-        
-        Complex architecture with multiple MLPs, only some wrapped::
-        
-            load_existing_weights("model.pth", {
-                "encoder.mlp.": "encoder.mlp.InterpretSR_MLP.",
-                "decoder.feature_extractor.": "decoder.feature_extractor.InterpretSR_MLP."
-            })
-        
-        Architecture where only specific layers are wrapped::
-        
-            load_existing_weights("model.pth", {
-                "backbone.layer3.": "backbone.layer3.InterpretSR_MLP.",
-                "head.classifier.": "head.classifier.InterpretSR_MLP."
-            })
     """
     original_state_dict = torch.load(file)
     new_state_dict = {}
@@ -66,6 +48,13 @@ def load_existing_weights_auto(file, target_model):
         
     Returns:
         Dict of adapted weights that can be loaded into target_model
+
+    Example:
+    >>> # Loading trained model weights onto a model using InterpretSR
+    >>> from interpretsr.utils import load_existing_weights_auto
+    >>> model_with_MLP_SR = model() # Initialise your model with MLP_SR wrappings
+    >>> weights = load_existing_weights_auto('original_model_weights.pth') # Adapt existing weights for InterpretSR compatibility
+    >>> model_with_MLP_SR.load_state_dict(weights) # Load adapted weights onto the model
     """
     # Load source weights to check their structure
     source_state_dict = torch.load(file)
@@ -90,4 +79,4 @@ def load_existing_weights_auto(file, target_model):
                 wrapped_paths[original_prefix] = wrapped_prefix
     
     # Use the detected mappings
-    return load_existing_weights(file, wrapped_paths)
+    return _load_existing_weights(file, wrapped_paths)

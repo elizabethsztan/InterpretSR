@@ -18,7 +18,7 @@ class MLP_SR(nn.Module):
     
     This class wraps any PyTorch MLP (Multi-Layer Perceptron) and provides methods
     to discover symbolic expressions that approximate the learned neural network
-    behavior using PySR (Python Symbolic Regression).
+    behavior using genetic algorithms supported by PySR.
     
     The wrapper maintains full compatibility with PyTorch's training pipeline while
     adding interpretability features through symbolic regression.
@@ -31,32 +31,43 @@ class MLP_SR(nn.Module):
     Example:
         >>> import torch
         >>> import torch.nn as nn
-        >>> from InterpretSR.src.mlp_sr import MLP_SR
+        >>> from interpretsr.mlp_sr import MLP_SR
         >>> 
-        >>> # Create a simple MLP
-        >>> mlp = nn.Sequential(
-        ...     nn.Linear(5, 10),
-        ...     nn.ReLU(),
-        ...     nn.Linear(10, 1)
-        ... )
-        >>> 
-        >>> # Wrap with MLP_SR
-        >>> wrapped_model = MLP_SR(mlp, "my_model")
-        >>> 
+        >>> # Create a model
+        >>> class SimpleModel(nn.Module):
+                def __init__(self, input_dim, output_dim, hidden_dim = 64):
+                    super(SimpleModel, self).__init__()
+                    mlp = nn.Sequential(
+                        nn.Linear(input_dim, hidden_dim),
+                        nn.ReLU(),
+                        nn.Dropout(0.2),
+                        nn.Linear(hidden_dim, hidden_dim),
+                        nn.ReLU(),
+                        nn.Dropout(0.2),
+                        nn.Linear(hidden_dim, hidden_dim),
+                        nn.ReLU(),
+                        nn.Dropout(0.2),
+                        nn.Linear(hidden_dim, output_dim)
+                    )
+                    self.mlp = MLP_SR(mlp, mlp_name = "Sequential") # Wrap the mlp 
+                    with MLP_SR and provide a label
+        >>> model = SimpleModel(input_dim=5, output_dim=1) # Initialise the model
         >>> # Train the model normally
-        >>> inputs = torch.randn(100, 5)
-        >>> outputs = wrapped_model(inputs)
+        >>> trained_model = training_function(model, dataloader, num_steps)
         >>> 
-        >>> # Discover symbolic expression
+        >>> # Apply symbolic regression to the inputs and outputs of the MLP
         >>> regressor = wrapped_model.interpret(inputs)
         >>> 
-        >>> # Switch to using the symbolic equation
-        >>> wrapped_model.switch_to_equation()
+        >>> # Switch to using the symbolic equation instead of the MLP in the forwards 
+            pass of your deep learning model
+        >>> trained_model.switch_to_equation()
+        >>> # Switch back to using the MLP in the forwards pass
+        >>> trained_model.switch_to_mlp()
     """
     
     def __init__(self, mlp: nn.Module, mlp_name: str = None):
         """
-        Initialize the MLP_SR wrapper.
+        Initialise the MLP_SR wrapper.
         
         Args:
             mlp (nn.Module): The PyTorch MLP model to wrap
@@ -114,16 +125,20 @@ class MLP_SR(nn.Module):
         """
         Discover symbolic expressions that approximate the MLP's behavior.
         
-        Uses PySR (Python Symbolic Regression) to find mathematical expressions
-        that best fit the input-output relationship learned by the neural network.
+        Uses PySR to find mathematical expressions that best fit the input-output relationship learned by the neural network.
         
         Args:
             inputs (torch.Tensor): Input data for symbolic regression fitting
-            **kwargs: Additional parameters passed to PySRRegressor. Common options:
-                - binary_operators (list): Binary operators to use (default: ["+", "*"])
-                - unary_operators (list): Unary operators to use 
-                - niterations (int): Number of iterations (default: 400)
-                - complexity_of_operators (dict): Complexity penalties for operators
+            **kwargs: Parameters passed to PySRRegressor. Defaults:
+                - binary_operators (list): ["+", "*"]
+                - unary_operators (list): ["inv(x) = 1/x", "sin", "exp"]
+                - niterations (int): 400
+                - output_directory (str): "SR_output/{mlp_name}" # Where PySR outputs are 
+                stored
+                - run_id (str): "{timestamp}" # Where PySR outputs of a specific run 
+                are stored
+            To see more information on the possible inputs to the PySRRegressor, please see
+            the PySR documentation.
                 
         Returns:
             PySRRegressor: Fitted symbolic regression model
@@ -140,8 +155,6 @@ class MLP_SR(nn.Module):
             "binary_operators": ["+", "*"],
             "unary_operators": ["inv(x) = 1/x", "sin", "exp"],
             "extra_sympy_mappings": {"inv": lambda x: 1/x},
-            "constraints": {"sin": 3, "exp": 3},
-            "complexity_of_operators": {"sin": 3, "exp": 3}, 
             "niterations": 400,
             "output_directory": output_name,
             "run_id": run_id
@@ -159,7 +172,7 @@ class MLP_SR(nn.Module):
         self.pysr_regressor = regressor
         return regressor
    
-    def get_equation_(self, complexity: int = None):
+    def _get_equation(self, complexity: int = None):
         """
         Extract symbolic equation function from fitted regressor.
         
@@ -212,11 +225,10 @@ class MLP_SR(nn.Module):
             bool: True if switch was successful, False otherwise
             
         Example:
-            >>> success = model.switch_to_equation(complexity=5)
-            >>> if success:
-            ...     predictions = model(test_inputs)  # Uses symbolic equation
+            >>> model.switch_to_equation(complexity=5)
+
         """
-        result = self.get_equation_(complexity)
+        result = self._get_equation(complexity)
         if result is None:
             return False
             
