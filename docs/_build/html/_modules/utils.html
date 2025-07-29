@@ -41,14 +41,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api_reference.html">API Reference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">API:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../modules.html">InterpretSR API Reference</a></li>
 </ul>
 
         </div>
@@ -87,7 +80,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 
 <div class="viewcode-block" id="load_existing_weights">
-<a class="viewcode-back" href="../utils.html#utils.load_existing_weights">[docs]</a>
+<a class="viewcode-back" href="../api_reference.html#utils.load_existing_weights">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_existing_weights</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">mlp_mappings</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Load weights from a model and adapt them for architectures with MLP_SR wrappers.</span>
@@ -98,20 +91,23 @@
 <span class="sd">                     If None, defaults to simple case: {&quot;mlp.&quot;: &quot;mlp.InterpretSR_MLP.&quot;}</span>
 <span class="sd">                     </span>
 <span class="sd">    Examples:</span>
-<span class="sd">        # Simple case (backward compatible)</span>
-<span class="sd">        load_existing_weights(&quot;model.pth&quot;)</span>
+<span class="sd">        Simple case (backward compatible)::</span>
 <span class="sd">        </span>
-<span class="sd">        # Complex architecture with multiple MLPs, only some wrapped</span>
-<span class="sd">        load_existing_weights(&quot;model.pth&quot;, {</span>
-<span class="sd">            &quot;encoder.mlp.&quot;: &quot;encoder.mlp.InterpretSR_MLP.&quot;,</span>
-<span class="sd">            &quot;decoder.feature_extractor.&quot;: &quot;decoder.feature_extractor.InterpretSR_MLP.&quot;</span>
-<span class="sd">        })</span>
+<span class="sd">            load_existing_weights(&quot;model.pth&quot;)</span>
 <span class="sd">        </span>
-<span class="sd">        # Architecture where only specific layers are wrapped</span>
-<span class="sd">        load_existing_weights(&quot;model.pth&quot;, {</span>
-<span class="sd">            &quot;backbone.layer3.&quot;: &quot;backbone.layer3.InterpretSR_MLP.&quot;,</span>
-<span class="sd">            &quot;head.classifier.&quot;: &quot;head.classifier.InterpretSR_MLP.&quot;</span>
-<span class="sd">        })</span>
+<span class="sd">        Complex architecture with multiple MLPs, only some wrapped::</span>
+<span class="sd">        </span>
+<span class="sd">            load_existing_weights(&quot;model.pth&quot;, {</span>
+<span class="sd">                &quot;encoder.mlp.&quot;: &quot;encoder.mlp.InterpretSR_MLP.&quot;,</span>
+<span class="sd">                &quot;decoder.feature_extractor.&quot;: &quot;decoder.feature_extractor.InterpretSR_MLP.&quot;</span>
+<span class="sd">            })</span>
+<span class="sd">        </span>
+<span class="sd">        Architecture where only specific layers are wrapped::</span>
+<span class="sd">        </span>
+<span class="sd">            load_existing_weights(&quot;model.pth&quot;, {</span>
+<span class="sd">                &quot;backbone.layer3.&quot;: &quot;backbone.layer3.InterpretSR_MLP.&quot;,</span>
+<span class="sd">                &quot;head.classifier.&quot;: &quot;head.classifier.InterpretSR_MLP.&quot;</span>
+<span class="sd">            })</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">original_state_dict</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
     <span class="n">new_state_dict</span> <span class="o">=</span> <span class="p">{}</span>
@@ -135,7 +131,7 @@
 
 
 <div class="viewcode-block" id="load_existing_weights_auto">
-<a class="viewcode-back" href="../utils.html#utils.load_existing_weights_auto">[docs]</a>
+<a class="viewcode-back" href="../api_reference.html#utils.load_existing_weights_auto">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_existing_weights_auto</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">target_model</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Automatically detect MLP_SR wrappers in target model and create appropriate mappings.</span>
@@ -181,7 +177,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2025, InterpretSR Team.</p>
+    <p>&#169; Copyright .</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

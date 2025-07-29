@@ -41,14 +41,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api_reference.html">API Reference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">API:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../modules.html">InterpretSR API Reference</a></li>
 </ul>
 
         </div>
@@ -91,7 +84,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">sympy</span><span class="w"> </span><span class="kn">import</span> <span class="n">lambdify</span>
 
 <div class="viewcode-block" id="MLP_SR">
-<a class="viewcode-back" href="../mlp_sr.html#mlp_sr.MLP_SR">[docs]</a>
+<a class="viewcode-back" href="../api_reference.html#mlp_sr.MLP_SR">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MLP_SR</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A PyTorch module wrapper that adds symbolic regression capabilities to MLPs.</span>
@@ -135,7 +128,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     
 <div class="viewcode-block" id="MLP_SR.__init__">
-<a class="viewcode-back" href="../mlp_sr.html#mlp_sr.MLP_SR.__init__">[docs]</a>
+<a class="viewcode-back" href="../api_reference.html#mlp_sr.MLP_SR.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mlp</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">mlp_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize the MLP_SR wrapper.</span>
@@ -153,7 +146,7 @@
 
     
 <div class="viewcode-block" id="MLP_SR.forward">
-<a class="viewcode-back" href="../mlp_sr.html#mlp_sr.MLP_SR.forward">[docs]</a>
+<a class="viewcode-back" href="../api_reference.html#mlp_sr.MLP_SR.forward">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Forward pass through the model.</span>
@@ -197,7 +190,7 @@
 
 
 <div class="viewcode-block" id="MLP_SR.interpret">
-<a class="viewcode-back" href="../mlp_sr.html#mlp_sr.MLP_SR.interpret">[docs]</a>
+<a class="viewcode-back" href="../api_reference.html#mlp_sr.MLP_SR.interpret">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">interpret</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Discover symbolic expressions that approximate the MLP&#39;s behavior.</span>
@@ -249,7 +242,7 @@
 
    
 <div class="viewcode-block" id="MLP_SR.get_equation_">
-<a class="viewcode-back" href="../mlp_sr.html#mlp_sr.MLP_SR.get_equation_">[docs]</a>
+<a class="viewcode-back" href="../api_reference.html#mlp_sr.MLP_SR.get_equation_">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_equation_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">complexity</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Extract symbolic equation function from fitted regressor.</span>
@@ -289,7 +282,7 @@
 
 
 <div class="viewcode-block" id="MLP_SR.switch_to_equation">
-<a class="viewcode-back" href="../mlp_sr.html#mlp_sr.MLP_SR.switch_to_equation">[docs]</a>
+<a class="viewcode-back" href="../api_reference.html#mlp_sr.MLP_SR.switch_to_equation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">switch_to_equation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">complexity</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Switch the forward pass from MLP to symbolic equation.</span>
@@ -345,7 +338,7 @@
 
    
 <div class="viewcode-block" id="MLP_SR.switch_to_mlp">
-<a class="viewcode-back" href="../mlp_sr.html#mlp_sr.MLP_SR.switch_to_mlp">[docs]</a>
+<a class="viewcode-back" href="../api_reference.html#mlp_sr.MLP_SR.switch_to_mlp">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">switch_to_mlp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Switch back to using the original MLP for forward passes.</span>
@@ -380,7 +373,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2025, InterpretSR Team.</p>
+    <p>&#169; Copyright .</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

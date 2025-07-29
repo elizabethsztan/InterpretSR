@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>InterpretSR Documentation &mdash; InterpretSR 1.0.0 documentation</title>
+  <title>Key Features &mdash; InterpretSR 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
@@ -19,7 +19,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Getting Started" href="getting_started.html" /> 
+    <link rel="next" title="API Reference" href="api_reference.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -43,14 +43,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api_reference.html">API Reference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">API:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="modules.html">InterpretSR API Reference</a></li>
 </ul>
 
         </div>
@@ -67,7 +60,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">InterpretSR Documentation</li>
+      <li class="breadcrumb-item active">Key Features</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -77,60 +70,22 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="interpretsr-documentation">
-<h1>InterpretSR Documentation<a class="headerlink" href="#interpretsr-documentation" title="Link to this heading"></a></h1>
-<p>InterpretSR is a Python library that combines neural networks with symbolic regression for interpretable machine learning.
-The project wraps PyTorch MLPs with PySR (Python Symbolic Regression) to automatically discover symbolic expressions
-that approximate the learned neural network behavior.</p>
-</section>
+  <a class="reference internal image-reference" href="_images/InterpretSR_header.png"><img alt="Description" src="_images/InterpretSR_header.png" style="width: 70%;" />
+</a>
+<p><em>InterpretSR</em> allows you to approximate the behaviour of multi-layer perceptrons (MLPs) in deep learning models with symbolic equations using <a class="reference external" href="https://ai.damtp.cam.ac.uk/pysr/">*PySR*</a>.</p>
 <section id="key-features">
 <h1>Key Features<a class="headerlink" href="#key-features" title="Link to this heading"></a></h1>
 <ul class="simple">
 <li><p><strong>Neural Network Wrapping</strong>: Seamlessly wrap any PyTorch MLP with symbolic regression capabilities</p></li>
-<li><p><strong>Automatic Discovery</strong>: Use PySR to find mathematical expressions that approximate neural network behavior</p></li>
+<li><p><strong>Automatic Discovery</strong>: Use <em>PySR</em> to find mathematical expressions that approximate neural network behavior</p></li>
 <li><p><strong>Interpretability</strong>: Convert black-box neural networks into human-readable symbolic expressions</p></li>
 <li><p><strong>Flexible Integration</strong>: Maintain full PyTorch compatibility while adding interpretability features</p></li>
 <li><p><strong>Dynamic Switching</strong>: Switch between neural network and symbolic equation modes during inference</p></li>
 </ul>
 </section>
-<section id="quick-start">
-<h1>Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading"></a></h1>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">InterpretSR.src.mlp_sr</span><span class="w"> </span><span class="kn">import</span> <span class="n">MLP_SR</span>
-
-<span class="c1"># Create a simple MLP</span>
-<span class="n">mlp</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
-    <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
-    <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
-    <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-<span class="p">)</span>
-
-<span class="c1"># Wrap with MLP_SR</span>
-<span class="n">wrapped_model</span> <span class="o">=</span> <span class="n">MLP_SR</span><span class="p">(</span><span class="n">mlp</span><span class="p">,</span> <span class="s2">&quot;my_model&quot;</span><span class="p">)</span>
-
-<span class="c1"># Train normally</span>
-<span class="n">inputs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
-<span class="n">outputs</span> <span class="o">=</span> <span class="n">wrapped_model</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
-
-<span class="c1"># Discover symbolic expression</span>
-<span class="n">regressor</span> <span class="o">=</span> <span class="n">wrapped_model</span><span class="o">.</span><span class="n">interpret</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
-
-<span class="c1"># Switch to symbolic equation</span>
-<span class="n">wrapped_model</span><span class="o">.</span><span class="n">switch_to_equation</span><span class="p">()</span>
-</pre></div>
-</div>
-</section>
 <section id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h1>
-<p>To install InterpretSR, clone the repository and install the dependencies:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>&lt;repository-url&gt;
-<span class="nb">cd</span><span class="w"> </span>InterpretSR_project
-<span class="nb">source</span><span class="w"> </span>interpretsr_venv/bin/activate
-pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
-</pre></div>
-</div>
-<p>Or install via pip (coming soon):</p>
+<p>To install <em>InterpretSR</em>,</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>interpretsr
 </pre></div>
 </div>
@@ -140,49 +95,11 @@ pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </s
 <div class="toctree-wrapper compound">
 <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="getting_started.html#installation">Installation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="getting_started.html#basic-usage">Basic Usage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="getting_started.html#next-steps">Next Steps</a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="api_reference.html">API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="api_reference.html#core-classes">Core Classes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api_reference.html#utility-functions">Utility Functions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api_reference.html#configuration-and-parameters">Configuration and Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api_reference.html#examples">Examples</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#example-1-basic-symbolic-regression">Example 1: Basic Symbolic Regression</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#example-2-complex-model-with-multiple-mlps">Example 2: Complex Model with Multiple MLPs</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#example-3-hyperparameter-tuning-for-symbolic-regression">Example 3: Hyperparameter Tuning for Symbolic Regression</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#example-4-weight-loading-and-model-adaptation">Example 4: Weight Loading and Model Adaptation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#running-the-examples">Running the Examples</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="contributing.html#development-setup">Development Setup</a></li>
-<li class="toctree-l2"><a class="reference internal" href="contributing.html#how-to-contribute">How to Contribute</a></li>
-<li class="toctree-l2"><a class="reference internal" href="contributing.html#code-style-guidelines">Code Style Guidelines</a></li>
-<li class="toctree-l2"><a class="reference internal" href="contributing.html#testing-guidelines">Testing Guidelines</a></li>
-<li class="toctree-l2"><a class="reference internal" href="contributing.html#documentation-guidelines">Documentation Guidelines</a></li>
-<li class="toctree-l2"><a class="reference internal" href="contributing.html#release-process">Release Process</a></li>
-<li class="toctree-l2"><a class="reference internal" href="contributing.html#community-guidelines">Community Guidelines</a></li>
-<li class="toctree-l2"><a class="reference internal" href="contributing.html#getting-help">Getting Help</a></li>
-</ul>
-</li>
-</ul>
-</div>
-</section>
-<section id="api-reference">
-<h1>API Reference<a class="headerlink" href="#api-reference" title="Link to this heading"></a></h1>
-<div class="toctree-wrapper compound">
-<p class="caption" role="heading"><span class="caption-text">API:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="modules.html">InterpretSR API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="mlp_sr.html">mlp_sr module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="utils.html">utils module</a></li>
 </ul>
 </li>
 </ul>
@@ -193,13 +110,13 @@ pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </s
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="getting_started.html" class="btn btn-neutral float-right" title="Getting Started" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="api_reference.html" class="btn btn-neutral float-right" title="API Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2025, InterpretSR Team.</p>
+    <p>&#169; Copyright .</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
