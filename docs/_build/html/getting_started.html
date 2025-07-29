@@ -1,0 +1,234 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Getting Started &mdash; InterpretSR 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=8d563738"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API Reference" href="api_reference.html" />
+    <link rel="prev" title="InterpretSR Documentation" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            InterpretSR
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#basic-usage">Basic Usage</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#creating-an-mlp-sr-wrapper">Creating an MLP_SR Wrapper</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#training-the-model">Training the Model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#discovering-symbolic-expressions">Discovering Symbolic Expressions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#switching-to-symbolic-mode">Switching to Symbolic Mode</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#working-with-different-complexities">Working with Different Complexities</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api_reference.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">InterpretSR API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">InterpretSR</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Getting Started</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/getting_started.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="getting-started">
+<h1>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading"></a></h1>
+<p>This guide will help you get started with InterpretSR, a library that combines neural networks with symbolic regression for interpretable machine learning.</p>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h2>
+<p>First, make sure you have Python 3.8 or higher installed. Then you can install InterpretSR and its dependencies:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>interpretsr
+</pre></div>
+</div>
+<p>Or if you’re installing from source:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>&lt;repository-url&gt;
+<span class="nb">cd</span><span class="w"> </span>InterpretSR_project
+python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>interpretsr_venv
+<span class="nb">source</span><span class="w"> </span>interpretsr_venv/bin/activate<span class="w">  </span><span class="c1"># On Windows: interpretsr_venv\Scripts\activate</span>
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+</section>
+<section id="basic-usage">
+<h2>Basic Usage<a class="headerlink" href="#basic-usage" title="Link to this heading"></a></h2>
+<p>The core concept of InterpretSR is wrapping existing PyTorch MLPs with the <code class="xref py py-class docutils literal notranslate"><span class="pre">MLP_SR</span></code> class to add symbolic regression capabilities.</p>
+<section id="creating-an-mlp-sr-wrapper">
+<h3>Creating an MLP_SR Wrapper<a class="headerlink" href="#creating-an-mlp-sr-wrapper" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">InterpretSR.src.mlp_sr</span><span class="w"> </span><span class="kn">import</span> <span class="n">MLP_SR</span>
+
+<span class="c1"># Create your standard PyTorch MLP</span>
+<span class="n">mlp</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+    <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">64</span><span class="p">),</span>
+    <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+    <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">32</span><span class="p">),</span>
+    <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+    <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="c1"># Wrap it with MLP_SR</span>
+<span class="n">interpretable_model</span> <span class="o">=</span> <span class="n">MLP_SR</span><span class="p">(</span><span class="n">mlp</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;my_model&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="training-the-model">
+<h3>Training the Model<a class="headerlink" href="#training-the-model" title="Link to this heading"></a></h3>
+<p>The wrapped model behaves exactly like a standard PyTorch model during training:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Generate some synthetic data</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">X</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">3</span><span class="o">*</span><span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">X</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="n">X</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="mf">0.1</span>
+
+<span class="c1"># Standard PyTorch training loop</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">interpretable_model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">)</span>
+<span class="n">criterion</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">MSELoss</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
+    <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+    <span class="n">predictions</span> <span class="o">=</span> <span class="n">interpretable_model</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+    <span class="n">loss</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+    <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="discovering-symbolic-expressions">
+<h3>Discovering Symbolic Expressions<a class="headerlink" href="#discovering-symbolic-expressions" title="Link to this heading"></a></h3>
+<p>After training, use the <code class="xref py py-meth docutils literal notranslate"><span class="pre">interpret()</span></code> method to discover symbolic expressions:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Discover symbolic expressions</span>
+<span class="n">regressor</span> <span class="o">=</span> <span class="n">interpretable_model</span><span class="o">.</span><span class="n">interpret</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">niterations</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+
+<span class="c1"># View the best equation found</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Best equation:&quot;</span><span class="p">,</span> <span class="n">regressor</span><span class="o">.</span><span class="n">get_best</span><span class="p">()[</span><span class="s1">&#39;equation&#39;</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Best score:&quot;</span><span class="p">,</span> <span class="n">regressor</span><span class="o">.</span><span class="n">get_best</span><span class="p">()[</span><span class="s1">&#39;score&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</section>
+<section id="switching-to-symbolic-mode">
+<h3>Switching to Symbolic Mode<a class="headerlink" href="#switching-to-symbolic-mode" title="Link to this heading"></a></h3>
+<p>Once you have a symbolic expression, you can switch the model to use it instead of the neural network:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Switch to using the symbolic equation</span>
+<span class="n">success</span> <span class="o">=</span> <span class="n">interpretable_model</span><span class="o">.</span><span class="n">switch_to_equation</span><span class="p">()</span>
+
+<span class="k">if</span> <span class="n">success</span><span class="p">:</span>
+    <span class="c1"># Now the model uses the symbolic equation for forward passes</span>
+    <span class="n">symbolic_predictions</span> <span class="o">=</span> <span class="n">interpretable_model</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+    <span class="c1"># Switch back to neural network if needed</span>
+    <span class="n">interpretable_model</span><span class="o">.</span><span class="n">switch_to_mlp</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="working-with-different-complexities">
+<h3>Working with Different Complexities<a class="headerlink" href="#working-with-different-complexities" title="Link to this heading"></a></h3>
+<p>PySR finds multiple equations of varying complexity. You can explore different options:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># View all discovered equations</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">regressor</span><span class="o">.</span><span class="n">equations_</span><span class="p">[[</span><span class="s1">&#39;complexity&#39;</span><span class="p">,</span> <span class="s1">&#39;loss&#39;</span><span class="p">,</span> <span class="s1">&#39;score&#39;</span><span class="p">,</span> <span class="s1">&#39;equation&#39;</span><span class="p">]])</span>
+
+<span class="c1"># Switch to a specific complexity level</span>
+<span class="n">interpretable_model</span><span class="o">.</span><span class="n">switch_to_equation</span><span class="p">(</span><span class="n">complexity</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="next-steps">
+<h2>Next Steps<a class="headerlink" href="#next-steps" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Check out the <a class="reference internal" href="examples.html"><span class="doc">Examples</span></a> for more detailed use cases</p></li>
+<li><p>Explore the <a class="reference internal" href="api_reference.html"><span class="doc">API Reference</span></a> for complete API documentation</p></li>
+<li><p>See the demo notebook in the repository for interactive examples</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="InterpretSR Documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api_reference.html" class="btn btn-neutral float-right" title="API Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, InterpretSR Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
