@@ -1,3 +1,11 @@
+"""
+InterpretSR Utilities
+
+This module provides utility functions for loading and adapting model weights
+when using MLP_SR wrappers, enabling seamless weight transfer between standard
+MLPs and their wrapped counterparts.
+"""
+
 import torch
 
 def load_existing_weights(file, mlp_mappings=None):
@@ -10,20 +18,23 @@ def load_existing_weights(file, mlp_mappings=None):
                      If None, defaults to simple case: {"mlp.": "mlp.InterpretSR_MLP."}
                      
     Examples:
-        # Simple case (backward compatible)
-        load_existing_weights("model.pth")
+        Simple case (backward compatible)::
         
-        # Complex architecture with multiple MLPs, only some wrapped
-        load_existing_weights("model.pth", {
-            "encoder.mlp.": "encoder.mlp.InterpretSR_MLP.",
-            "decoder.feature_extractor.": "decoder.feature_extractor.InterpretSR_MLP."
-        })
+            load_existing_weights("model.pth")
         
-        # Architecture where only specific layers are wrapped
-        load_existing_weights("model.pth", {
-            "backbone.layer3.": "backbone.layer3.InterpretSR_MLP.",
-            "head.classifier.": "head.classifier.InterpretSR_MLP."
-        })
+        Complex architecture with multiple MLPs, only some wrapped::
+        
+            load_existing_weights("model.pth", {
+                "encoder.mlp.": "encoder.mlp.InterpretSR_MLP.",
+                "decoder.feature_extractor.": "decoder.feature_extractor.InterpretSR_MLP."
+            })
+        
+        Architecture where only specific layers are wrapped::
+        
+            load_existing_weights("model.pth", {
+                "backbone.layer3.": "backbone.layer3.InterpretSR_MLP.",
+                "head.classifier.": "head.classifier.InterpretSR_MLP."
+            })
     """
     original_state_dict = torch.load(file)
     new_state_dict = {}
