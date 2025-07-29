@@ -249,6 +249,107 @@ def test_switch_to_mlp():
         cleanup_sr_outputs()
 
 
+def test_equation_actually_used_in_forward():
+    """
+    Test that switching to equation mode actually uses the symbolic equation 
+    by manually setting a known equation and verifying the output.
+    """
+    global trained_model
+    if trained_model is None:
+        pytest.skip("No trained model available - training test may have failed")
+    
+    try:
+        # Create test input - use first column for simple equation sin(x0) + 2
+        test_input = torch.FloatTensor([[0.5], [1.0], [1.57], [3.14]])  # Some test values
+        
+        # Manually set up the equation components
+        def test_equation(x0):
+            return np.sin(x0) + 2
+        
+        # Manually set the equation in the MLP_SR object
+        trained_model.mlp._equation_func = test_equation
+        trained_model.mlp._var_indices = [0]  # Only use first input variable
+        trained_model.mlp._using_equation = True
+        
+        # Get output using the equation
+        equation_output = trained_model.mlp(test_input)
+        
+        # Calculate expected output manually
+        expected_output = torch.tensor([[np.sin(0.5) + 2], 
+                                       [np.sin(1.0) + 2], 
+                                       [np.sin(1.57) + 2], 
+                                       [np.sin(3.14) + 2]], dtype=torch.float32)
+        
+        # Verify outputs match (within floating point tolerance)
+        diff = torch.abs(equation_output - expected_output)
+        max_diff = torch.max(diff)
+        
+        assert max_diff < 1e-5, f"Equation output doesn't match expected (max diff: {max_diff})"
+        print(f"✅ Equation mode correctly computes sin(x0) + 2 (max diff: {max_diff:.8f})")
+        
+    except Exception as e:
+        pytest.fail(f"test_equation_actually_used_in_forward failed with error: {e}")
+    finally:
+        # Reset to MLP mode
+        if hasattr(trained_model.mlp, '_using_equation'):
+            trained_model.mlp._using_equation = False
+
+
+def test_mlp_actually_used_after_switch_back():
+    """
+    Test that switching back to MLP mode actually uses the original MLP
+    by comparing with a separate MLP loaded with the same weights.
+    """
+    global trained_model
+    if trained_model is None:
+        pytest.skip("No trained model available - training test may have failed")
+    
+    try:
+        # Create test input
+        test_input = torch.FloatTensor(X_train[:10])
+        
+        # Ensure we're in MLP mode
+        trained_model.mlp.switch_to_mlp()
+        trained_model.mlp._using_equation = False
+        
+        # Get output from the MLP_SR in MLP mode
+        mlp_sr_output = trained_model.mlp(test_input).clone().detach()
+        
+        # Create a separate regular MLP with same architecture
+        separate_mlp = nn.Sequential(
+            nn.Linear(5, 64),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(64, 64),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(64, 64),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(64, 1)
+        )
+        
+        # Copy weights from the MLP_SR's internal MLP to the separate MLP
+        separate_mlp.load_state_dict(trained_model.mlp.InterpretSR_MLP.state_dict())
+        
+        # Set to eval mode to match the trained model
+        separate_mlp.eval()
+        
+        # Get output from the separate MLP
+        with torch.no_grad():
+            separate_mlp_output = separate_mlp(test_input)
+        
+        # Outputs should be identical
+        diff = torch.abs(mlp_sr_output - separate_mlp_output)
+        max_diff = torch.max(diff)
+        
+        assert max_diff < 1e-6, f"MLP_SR and separate MLP outputs differ (max diff: {max_diff})"
+        print(f"✅ MLP mode uses actual MLP (max diff: {max_diff:.8f})")
+        
+    except Exception as e:
+        pytest.fail(f"test_mlp_actually_used_after_switch_back failed with error: {e}")
+
+
 def cleanup_sr_outputs():
     """
     Clean up SR output files and directories created during testing.
