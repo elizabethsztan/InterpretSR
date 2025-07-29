@@ -20,8 +20,6 @@ Utility Functions
 Weight Loading Utilities
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autofunction:: utils.load_existing_weights
-
 .. autofunction:: utils.load_existing_weights_auto
 
 Configuration and Parameters

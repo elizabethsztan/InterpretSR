@@ -53,7 +53,6 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#utility-functions">Utility Functions</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#weight-loading-utilities">Weight Loading Utilities</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#utils.load_existing_weights"><code class="docutils literal notranslate"><span class="pre">load_existing_weights()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#utils.load_existing_weights_auto"><code class="docutils literal notranslate"><span class="pre">load_existing_weights_auto()</span></code></a></li>
 </ul>
 </li>
@@ -111,7 +110,7 @@
 <p>A PyTorch module wrapper that adds symbolic regression capabilities to MLPs.</p>
 <p>This class wraps any PyTorch MLP (Multi-Layer Perceptron) and provides methods
 to discover symbolic expressions that approximate the learned neural network
-behavior using PySR (Python Symbolic Regression).</p>
+behavior using genetic algorithms supported by PySR.</p>
 <p>The wrapper maintains full compatibility with PyTorch’s training pipeline while
 adding interpretability features through symbolic regression.</p>
 <dl class="py attribute">
@@ -150,27 +149,38 @@ adding interpretability features through symbolic regression.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">InterpretSR.src.mlp_sr</span><span class="w"> </span><span class="kn">import</span> <span class="n">MLP_SR</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">interpretsr.mlp_sr</span><span class="w"> </span><span class="kn">import</span> <span class="n">MLP_SR</span>
 <span class="gp">&gt;&gt;&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Create a simple MLP</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">mlp</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
-<span class="gp">... </span>    <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
-<span class="gp">... </span>    <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-<span class="gp">... </span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Wrap with MLP_SR</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">wrapped_model</span> <span class="o">=</span> <span class="n">MLP_SR</span><span class="p">(</span><span class="n">mlp</span><span class="p">,</span> <span class="s2">&quot;my_model&quot;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Create a model</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span><span class="w"> </span><span class="nc">SimpleModel</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="go">        def __init__(self, input_dim, output_dim, hidden_dim = 64):</span>
+<span class="go">            super(SimpleModel, self).__init__()</span>
+<span class="go">            mlp = nn.Sequential(</span>
+<span class="go">                nn.Linear(input_dim, hidden_dim),</span>
+<span class="go">                nn.ReLU(),</span>
+<span class="go">                nn.Dropout(0.2),</span>
+<span class="go">                nn.Linear(hidden_dim, hidden_dim),</span>
+<span class="go">                nn.ReLU(),</span>
+<span class="go">                nn.Dropout(0.2),</span>
+<span class="go">                nn.Linear(hidden_dim, hidden_dim),</span>
+<span class="go">                nn.ReLU(),</span>
+<span class="go">                nn.Dropout(0.2),</span>
+<span class="go">                nn.Linear(hidden_dim, output_dim)</span>
+<span class="go">            )</span>
+<span class="go">            self.mlp = MLP_SR(mlp, mlp_name = &quot;Sequential&quot;) # Wrap the mlp</span>
+<span class="go">            with MLP_SR and provide a label</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SimpleModel</span><span class="p">(</span><span class="n">input_dim</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">output_dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="c1"># Initialise the model</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># Train the model normally</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">inputs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">outputs</span> <span class="o">=</span> <span class="n">wrapped_model</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">trained_model</span> <span class="o">=</span> <span class="n">training_function</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Discover symbolic expression</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Apply symbolic regression to the inputs and outputs of the MLP</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">regressor</span> <span class="o">=</span> <span class="n">wrapped_model</span><span class="o">.</span><span class="n">interpret</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Switch to using the symbolic equation</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">wrapped_model</span><span class="o">.</span><span class="n">switch_to_equation</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Switch to using the symbolic equation instead of the MLP in the forwards</span>
+<span class="go">    pass of your deep learning model</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">trained_model</span><span class="o">.</span><span class="n">switch_to_equation</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Switch back to using the MLP in the forwards pass</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">trained_model</span><span class="o">.</span><span class="n">switch_to_mlp</span><span class="p">()</span>
 </pre></div>
 </div>
 <dl class="field-list simple">
@@ -184,7 +194,7 @@ adding interpretability features through symbolic regression.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="mlp_sr.MLP_SR.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mlp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.7)"><span class="pre">Module</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">mlp_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mlp_sr.html#MLP_SR.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mlp_sr.MLP_SR.__init__" title="Link to this definition"></a></dt>
-<dd><p>Initialize the MLP_SR wrapper.</p>
+<dd><p>Initialise the MLP_SR wrapper.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -223,17 +233,22 @@ and evaluates the discovered symbolic expression.</p>
 <dt class="sig sig-object py" id="mlp_sr.MLP_SR.interpret">
 <span class="sig-name descname"><span class="pre">interpret</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mlp_sr.html#MLP_SR.interpret"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mlp_sr.MLP_SR.interpret" title="Link to this definition"></a></dt>
 <dd><p>Discover symbolic expressions that approximate the MLP’s behavior.</p>
-<p>Uses PySR (Python Symbolic Regression) to find mathematical expressions
-that best fit the input-output relationship learned by the neural network.</p>
+<p>Uses PySR to find mathematical expressions that best fit the input-output relationship learned by the neural network.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>inputs</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><em>torch.Tensor</em></a>) – Input data for symbolic regression fitting</p></li>
-<li><p><strong>**kwargs</strong> – Additional parameters passed to PySRRegressor. Common options:
-- binary_operators (list): Binary operators to use (default: [“+”, “*”])
-- unary_operators (list): Unary operators to use
-- niterations (int): Number of iterations (default: 400)
-- complexity_of_operators (dict): Complexity penalties for operators</p></li>
+<li><p><strong>**kwargs</strong> – Parameters passed to PySRRegressor. Defaults:
+- binary_operators (list): [“+”, “*”]
+- unary_operators (list): [“inv(x) = 1/x”, “sin”, “exp”]
+- niterations (int): 400
+- output_directory (str): “SR_output/{mlp_name}” # Where PySR outputs are
+stored
+- run_id (str): “{timestamp}” # Where PySR outputs of a specific run
+are stored</p></li>
+<li><p><strong>PySRRegressor</strong> (<em>To see more information on the possible inputs to the</em>)</p></li>
+<li><p><strong>see</strong> (<em>please</em>)</p></li>
+<li><p><strong>documentation.</strong> (<em>the PySR</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -247,34 +262,6 @@ that best fit the input-output relationship learned by the neural network.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">regressor</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">interpret</span><span class="p">(</span><span class="n">train_inputs</span><span class="p">,</span> <span class="n">niterations</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">regressor</span><span class="o">.</span><span class="n">get_best</span><span class="p">()[</span><span class="s1">&#39;equation&#39;</span><span class="p">])</span>
 </pre></div>
-</div>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="mlp_sr.MLP_SR.get_equation_">
-<span class="sig-name descname"><span class="pre">get_equation_</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">complexity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mlp_sr.html#MLP_SR.get_equation_"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mlp_sr.MLP_SR.get_equation_" title="Link to this definition"></a></dt>
-<dd><p>Extract symbolic equation function from fitted regressor.</p>
-<p>Converts the symbolic expression from PySR into a callable function
-that can be used for prediction.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>complexity</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>, </em><em>optional</em>) – Specific complexity level to retrieve.
-If None, returns the best overall equation.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><dl class="simple">
-<dt>(equation_function, sorted_variables) if successful,</dt><dd><p>None if no equation found or complexity not available</p>
-</dd>
-</dl>
-</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.13)">tuple</a> or None</p>
-</dd>
-</dl>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>This is an internal method. Use switch_to_equation() for public API.</p>
 </div>
 </dd></dl>
 
@@ -298,9 +285,7 @@ If None, uses the best overall equation.</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">success</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">switch_to_equation</span><span class="p">(</span><span class="n">complexity</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">if</span> <span class="n">success</span><span class="p">:</span>
-<span class="gp">... </span>    <span class="n">predictions</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">test_inputs</span><span class="p">)</span>  <span class="c1"># Uses symbolic equation</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">.</span><span class="n">switch_to_equation</span><span class="p">(</span><span class="n">complexity</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -336,40 +321,6 @@ reverting any previous switch_to_equation() call.</p>
 <section id="weight-loading-utilities">
 <h3>Weight Loading Utilities<a class="headerlink" href="#weight-loading-utilities" title="Link to this heading"></a></h3>
 <dl class="py function">
-<dt class="sig sig-object py" id="utils.load_existing_weights">
-<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">load_existing_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mlp_mappings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utils.html#load_existing_weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.load_existing_weights" title="Link to this definition"></a></dt>
-<dd><p>Load weights from a model and adapt them for architectures with MLP_SR wrappers.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>file</strong> – Path to the saved model weights</p></li>
-<li><p><strong>mlp_mappings</strong> – Dict mapping original MLP paths to their wrapped versions.
-If None, defaults to simple case: {“mlp.”: “mlp.InterpretSR_MLP.”}</p></li>
-</ul>
-</dd>
-</dl>
-<p class="rubric">Examples</p>
-<p>Simple case (backward compatible):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">load_existing_weights</span><span class="p">(</span><span class="s2">&quot;model.pth&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Complex architecture with multiple MLPs, only some wrapped:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">load_existing_weights</span><span class="p">(</span><span class="s2">&quot;model.pth&quot;</span><span class="p">,</span> <span class="p">{</span>
-    <span class="s2">&quot;encoder.mlp.&quot;</span><span class="p">:</span> <span class="s2">&quot;encoder.mlp.InterpretSR_MLP.&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;decoder.feature_extractor.&quot;</span><span class="p">:</span> <span class="s2">&quot;decoder.feature_extractor.InterpretSR_MLP.&quot;</span>
-<span class="p">})</span>
-</pre></div>
-</div>
-<p>Architecture where only specific layers are wrapped:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">load_existing_weights</span><span class="p">(</span><span class="s2">&quot;model.pth&quot;</span><span class="p">,</span> <span class="p">{</span>
-    <span class="s2">&quot;backbone.layer3.&quot;</span><span class="p">:</span> <span class="s2">&quot;backbone.layer3.InterpretSR_MLP.&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;head.classifier.&quot;</span><span class="p">:</span> <span class="s2">&quot;head.classifier.InterpretSR_MLP.&quot;</span>
-<span class="p">})</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="utils.load_existing_weights_auto">
 <span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">load_existing_weights_auto</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utils.html#load_existing_weights_auto"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.load_existing_weights_auto" title="Link to this definition"></a></dt>
 <dd><p>Automatically detect MLP_SR wrappers in target model and create appropriate mappings.</p>
@@ -384,6 +335,12 @@ If None, defaults to simple case: {“mlp.”: “mlp.InterpretSR_MLP.”}</p></
 <dd class="field-even"><p>Dict of adapted weights that can be loaded into target_model</p>
 </dd>
 </dl>
+<p>Example:
+&gt;&gt;&gt; # Loading trained model weights onto a model using InterpretSR
+&gt;&gt;&gt; from interpretsr.utils import load_existing_weights_auto
+&gt;&gt;&gt; model_with_MLP_SR = model() # Initialise your model with MLP_SR wrappings
+&gt;&gt;&gt; weights = load_existing_weights_auto(‘original_model_weights.pth’) # Adapt existing weights for InterpretSR compatibility
+&gt;&gt;&gt; model_with_MLP_SR.load_state_dict(weights) # Load adapted weights onto the model</p>
 </dd></dl>
 
 </section>

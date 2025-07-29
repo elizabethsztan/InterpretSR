@@ -79,35 +79,15 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 
-<div class="viewcode-block" id="load_existing_weights">
-<a class="viewcode-back" href="../api_reference.html#utils.load_existing_weights">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">load_existing_weights</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">mlp_mappings</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_load_existing_weights</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">mlp_mappings</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Load weights from a model and adapt them for architectures with MLP_SR wrappers.</span>
+<span class="sd">    This function is used in the main weight loading function load_existing_weights_auto.</span>
 <span class="sd">    </span>
 <span class="sd">    Args:</span>
 <span class="sd">        file: Path to the saved model weights</span>
 <span class="sd">        mlp_mappings: Dict mapping original MLP paths to their wrapped versions.</span>
 <span class="sd">                     If None, defaults to simple case: {&quot;mlp.&quot;: &quot;mlp.InterpretSR_MLP.&quot;}</span>
-<span class="sd">                     </span>
-<span class="sd">    Examples:</span>
-<span class="sd">        Simple case (backward compatible)::</span>
-<span class="sd">        </span>
-<span class="sd">            load_existing_weights(&quot;model.pth&quot;)</span>
-<span class="sd">        </span>
-<span class="sd">        Complex architecture with multiple MLPs, only some wrapped::</span>
-<span class="sd">        </span>
-<span class="sd">            load_existing_weights(&quot;model.pth&quot;, {</span>
-<span class="sd">                &quot;encoder.mlp.&quot;: &quot;encoder.mlp.InterpretSR_MLP.&quot;,</span>
-<span class="sd">                &quot;decoder.feature_extractor.&quot;: &quot;decoder.feature_extractor.InterpretSR_MLP.&quot;</span>
-<span class="sd">            })</span>
-<span class="sd">        </span>
-<span class="sd">        Architecture where only specific layers are wrapped::</span>
-<span class="sd">        </span>
-<span class="sd">            load_existing_weights(&quot;model.pth&quot;, {</span>
-<span class="sd">                &quot;backbone.layer3.&quot;: &quot;backbone.layer3.InterpretSR_MLP.&quot;,</span>
-<span class="sd">                &quot;head.classifier.&quot;: &quot;head.classifier.InterpretSR_MLP.&quot;</span>
-<span class="sd">            })</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">original_state_dict</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
     <span class="n">new_state_dict</span> <span class="o">=</span> <span class="p">{}</span>
@@ -127,8 +107,7 @@
                 
         <span class="n">new_state_dict</span><span class="p">[</span><span class="n">new_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
     
-    <span class="k">return</span> <span class="n">new_state_dict</span></div>
-
+    <span class="k">return</span> <span class="n">new_state_dict</span>
 
 <div class="viewcode-block" id="load_existing_weights_auto">
 <a class="viewcode-back" href="../api_reference.html#utils.load_existing_weights_auto">[docs]</a>
@@ -142,6 +121,13 @@
 <span class="sd">        </span>
 <span class="sd">    Returns:</span>
 <span class="sd">        Dict of adapted weights that can be loaded into target_model</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">    &gt;&gt;&gt; # Loading trained model weights onto a model using InterpretSR</span>
+<span class="sd">    &gt;&gt;&gt; from interpretsr.utils import load_existing_weights_auto</span>
+<span class="sd">    &gt;&gt;&gt; model_with_MLP_SR = model() # Initialise your model with MLP_SR wrappings</span>
+<span class="sd">    &gt;&gt;&gt; weights = load_existing_weights_auto(&#39;original_model_weights.pth&#39;) # Adapt existing weights for InterpretSR compatibility</span>
+<span class="sd">    &gt;&gt;&gt; model_with_MLP_SR.load_state_dict(weights) # Load adapted weights onto the model</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Load source weights to check their structure</span>
     <span class="n">source_state_dict</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
@@ -166,7 +152,7 @@
                 <span class="n">wrapped_paths</span><span class="p">[</span><span class="n">original_prefix</span><span class="p">]</span> <span class="o">=</span> <span class="n">wrapped_prefix</span>
     
     <span class="c1"># Use the detected mappings</span>
-    <span class="k">return</span> <span class="n">load_existing_weights</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">wrapped_paths</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">_load_existing_weights</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">wrapped_paths</span><span class="p">)</span></div>
 
 </pre></div>
 

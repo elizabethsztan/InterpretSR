@@ -91,7 +91,7 @@
 <span class="sd">    </span>
 <span class="sd">    This class wraps any PyTorch MLP (Multi-Layer Perceptron) and provides methods</span>
 <span class="sd">    to discover symbolic expressions that approximate the learned neural network</span>
-<span class="sd">    behavior using PySR (Python Symbolic Regression).</span>
+<span class="sd">    behavior using genetic algorithms supported by PySR.</span>
 <span class="sd">    </span>
 <span class="sd">    The wrapper maintains full compatibility with PyTorch&#39;s training pipeline while</span>
 <span class="sd">    adding interpretability features through symbolic regression.</span>
@@ -104,34 +104,45 @@
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; import torch</span>
 <span class="sd">        &gt;&gt;&gt; import torch.nn as nn</span>
-<span class="sd">        &gt;&gt;&gt; from InterpretSR.src.mlp_sr import MLP_SR</span>
+<span class="sd">        &gt;&gt;&gt; from interpretsr.mlp_sr import MLP_SR</span>
 <span class="sd">        &gt;&gt;&gt; </span>
-<span class="sd">        &gt;&gt;&gt; # Create a simple MLP</span>
-<span class="sd">        &gt;&gt;&gt; mlp = nn.Sequential(</span>
-<span class="sd">        ...     nn.Linear(5, 10),</span>
-<span class="sd">        ...     nn.ReLU(),</span>
-<span class="sd">        ...     nn.Linear(10, 1)</span>
-<span class="sd">        ... )</span>
-<span class="sd">        &gt;&gt;&gt; </span>
-<span class="sd">        &gt;&gt;&gt; # Wrap with MLP_SR</span>
-<span class="sd">        &gt;&gt;&gt; wrapped_model = MLP_SR(mlp, &quot;my_model&quot;)</span>
-<span class="sd">        &gt;&gt;&gt; </span>
+<span class="sd">        &gt;&gt;&gt; # Create a model</span>
+<span class="sd">        &gt;&gt;&gt; class SimpleModel(nn.Module):</span>
+<span class="sd">                def __init__(self, input_dim, output_dim, hidden_dim = 64):</span>
+<span class="sd">                    super(SimpleModel, self).__init__()</span>
+<span class="sd">                    mlp = nn.Sequential(</span>
+<span class="sd">                        nn.Linear(input_dim, hidden_dim),</span>
+<span class="sd">                        nn.ReLU(),</span>
+<span class="sd">                        nn.Dropout(0.2),</span>
+<span class="sd">                        nn.Linear(hidden_dim, hidden_dim),</span>
+<span class="sd">                        nn.ReLU(),</span>
+<span class="sd">                        nn.Dropout(0.2),</span>
+<span class="sd">                        nn.Linear(hidden_dim, hidden_dim),</span>
+<span class="sd">                        nn.ReLU(),</span>
+<span class="sd">                        nn.Dropout(0.2),</span>
+<span class="sd">                        nn.Linear(hidden_dim, output_dim)</span>
+<span class="sd">                    )</span>
+<span class="sd">                    self.mlp = MLP_SR(mlp, mlp_name = &quot;Sequential&quot;) # Wrap the mlp </span>
+<span class="sd">                    with MLP_SR and provide a label</span>
+<span class="sd">        &gt;&gt;&gt; model = SimpleModel(input_dim=5, output_dim=1) # Initialise the model</span>
 <span class="sd">        &gt;&gt;&gt; # Train the model normally</span>
-<span class="sd">        &gt;&gt;&gt; inputs = torch.randn(100, 5)</span>
-<span class="sd">        &gt;&gt;&gt; outputs = wrapped_model(inputs)</span>
+<span class="sd">        &gt;&gt;&gt; trained_model = training_function(model, dataloader, num_steps)</span>
 <span class="sd">        &gt;&gt;&gt; </span>
-<span class="sd">        &gt;&gt;&gt; # Discover symbolic expression</span>
+<span class="sd">        &gt;&gt;&gt; # Apply symbolic regression to the inputs and outputs of the MLP</span>
 <span class="sd">        &gt;&gt;&gt; regressor = wrapped_model.interpret(inputs)</span>
 <span class="sd">        &gt;&gt;&gt; </span>
-<span class="sd">        &gt;&gt;&gt; # Switch to using the symbolic equation</span>
-<span class="sd">        &gt;&gt;&gt; wrapped_model.switch_to_equation()</span>
+<span class="sd">        &gt;&gt;&gt; # Switch to using the symbolic equation instead of the MLP in the forwards </span>
+<span class="sd">            pass of your deep learning model</span>
+<span class="sd">        &gt;&gt;&gt; trained_model.switch_to_equation()</span>
+<span class="sd">        &gt;&gt;&gt; # Switch back to using the MLP in the forwards pass</span>
+<span class="sd">        &gt;&gt;&gt; trained_model.switch_to_mlp()</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     
 <div class="viewcode-block" id="MLP_SR.__init__">
 <a class="viewcode-back" href="../api_reference.html#mlp_sr.MLP_SR.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mlp</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">mlp_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Initialize the MLP_SR wrapper.</span>
+<span class="sd">        Initialise the MLP_SR wrapper.</span>
 <span class="sd">        </span>
 <span class="sd">        Args:</span>
 <span class="sd">            mlp (nn.Module): The PyTorch MLP model to wrap</span>
@@ -195,16 +206,20 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Discover symbolic expressions that approximate the MLP&#39;s behavior.</span>
 <span class="sd">        </span>
-<span class="sd">        Uses PySR (Python Symbolic Regression) to find mathematical expressions</span>
-<span class="sd">        that best fit the input-output relationship learned by the neural network.</span>
+<span class="sd">        Uses PySR to find mathematical expressions that best fit the input-output relationship learned by the neural network.</span>
 <span class="sd">        </span>
 <span class="sd">        Args:</span>
 <span class="sd">            inputs (torch.Tensor): Input data for symbolic regression fitting</span>
-<span class="sd">            **kwargs: Additional parameters passed to PySRRegressor. Common options:</span>
-<span class="sd">                - binary_operators (list): Binary operators to use (default: [&quot;+&quot;, &quot;*&quot;])</span>
-<span class="sd">                - unary_operators (list): Unary operators to use </span>
-<span class="sd">                - niterations (int): Number of iterations (default: 400)</span>
-<span class="sd">                - complexity_of_operators (dict): Complexity penalties for operators</span>
+<span class="sd">            **kwargs: Parameters passed to PySRRegressor. Defaults:</span>
+<span class="sd">                - binary_operators (list): [&quot;+&quot;, &quot;*&quot;]</span>
+<span class="sd">                - unary_operators (list): [&quot;inv(x) = 1/x&quot;, &quot;sin&quot;, &quot;exp&quot;]</span>
+<span class="sd">                - niterations (int): 400</span>
+<span class="sd">                - output_directory (str): &quot;SR_output/{mlp_name}&quot; # Where PySR outputs are </span>
+<span class="sd">                stored</span>
+<span class="sd">                - run_id (str): &quot;{timestamp}&quot; # Where PySR outputs of a specific run </span>
+<span class="sd">                are stored</span>
+<span class="sd">            To see more information on the possible inputs to the PySRRegressor, please see</span>
+<span class="sd">            the PySR documentation.</span>
 <span class="sd">                </span>
 <span class="sd">        Returns:</span>
 <span class="sd">            PySRRegressor: Fitted symbolic regression model</span>
@@ -221,8 +236,6 @@
             <span class="s2">&quot;binary_operators&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;+&quot;</span><span class="p">,</span> <span class="s2">&quot;*&quot;</span><span class="p">],</span>
             <span class="s2">&quot;unary_operators&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;inv(x) = 1/x&quot;</span><span class="p">,</span> <span class="s2">&quot;sin&quot;</span><span class="p">,</span> <span class="s2">&quot;exp&quot;</span><span class="p">],</span>
             <span class="s2">&quot;extra_sympy_mappings&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;inv&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="mi">1</span><span class="o">/</span><span class="n">x</span><span class="p">},</span>
-            <span class="s2">&quot;constraints&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;sin&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;exp&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">},</span>
-            <span class="s2">&quot;complexity_of_operators&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;sin&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;exp&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">},</span> 
             <span class="s2">&quot;niterations&quot;</span><span class="p">:</span> <span class="mi">400</span><span class="p">,</span>
             <span class="s2">&quot;output_directory&quot;</span><span class="p">:</span> <span class="n">output_name</span><span class="p">,</span>
             <span class="s2">&quot;run_id&quot;</span><span class="p">:</span> <span class="n">run_id</span>
@@ -241,9 +254,7 @@
         <span class="k">return</span> <span class="n">regressor</span></div>
 
    
-<div class="viewcode-block" id="MLP_SR.get_equation_">
-<a class="viewcode-back" href="../api_reference.html#mlp_sr.MLP_SR.get_equation_">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_equation_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">complexity</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_equation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">complexity</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Extract symbolic equation function from fitted regressor.</span>
 <span class="sd">        </span>
@@ -278,8 +289,7 @@
 
         <span class="n">vars_sorted</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">free_symbols</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
         <span class="n">f</span> <span class="o">=</span> <span class="n">lambdify</span><span class="p">(</span><span class="n">vars_sorted</span><span class="p">,</span> <span class="n">expr</span><span class="p">,</span> <span class="s2">&quot;numpy&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">f</span><span class="p">,</span> <span class="n">vars_sorted</span></div>
-
+        <span class="k">return</span> <span class="n">f</span><span class="p">,</span> <span class="n">vars_sorted</span>
 
 <div class="viewcode-block" id="MLP_SR.switch_to_equation">
 <a class="viewcode-back" href="../api_reference.html#mlp_sr.MLP_SR.switch_to_equation">[docs]</a>
@@ -299,11 +309,10 @@
 <span class="sd">            bool: True if switch was successful, False otherwise</span>
 <span class="sd">            </span>
 <span class="sd">        Example:</span>
-<span class="sd">            &gt;&gt;&gt; success = model.switch_to_equation(complexity=5)</span>
-<span class="sd">            &gt;&gt;&gt; if success:</span>
-<span class="sd">            ...     predictions = model(test_inputs)  # Uses symbolic equation</span>
+<span class="sd">            &gt;&gt;&gt; model.switch_to_equation(complexity=5)</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_equation_</span><span class="p">(</span><span class="n">complexity</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_equation</span><span class="p">(</span><span class="n">complexity</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span>
             
