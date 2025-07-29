@@ -1,0 +1,275 @@
+import sys
+import os
+import shutil
+import pytest
+import torch 
+import torch.nn as nn
+import torch.optim as optim
+from sklearn.model_selection import train_test_split
+from torch.utils.data import DataLoader, TensorDataset
+import numpy as np
+
+# Add the src directory to Python path for absolute imports
+src_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'src')
+sys.path.insert(0, src_path)
+
+from mlp_sr import MLP_SR
+
+
+def test_MLP_SR_wrapper():
+    """
+    Test that MLP_SR wrapper can successfully wrap a PyTorch Sequential model.
+    """
+    try:
+        class SimpleModel(nn.Module):
+            def __init__(self, input_dim, output_dim, hidden_dim = 64):
+                super(SimpleModel, self).__init__()
+                mlp = nn.Sequential(
+                    nn.Linear(input_dim, hidden_dim),
+                    nn.ReLU(),
+                    nn.Dropout(0.2),
+                    nn.Linear(hidden_dim, hidden_dim),
+                    nn.ReLU(),
+                    nn.Dropout(0.2),
+                    nn.Linear(hidden_dim, hidden_dim),
+                    nn.ReLU(),
+                    nn.Dropout(0.2),
+                    nn.Linear(hidden_dim, output_dim)
+                )
+                self.mlp = MLP_SR(mlp, mlp_name = "Sequential")
+        model = SimpleModel(input_dim=5, output_dim=1)
+        assert hasattr(model.mlp, 'InterpretSR_MLP'), "MLP_SR should have InterpretSR_MLP attribute"
+        assert hasattr(model.mlp, 'interpret'), "MLP_SR should have interpret method"
+    except Exception as e:
+        pytest.fail(f"MLP_SR wrapper failed with error: {e}.")
+
+
+class SimpleModel(nn.Module):
+    """
+    Simple model class for testing MLP_SR functionality.
+    Uses a Sequential MLP wrapped with MLP_SR.
+    """
+    def __init__(self, input_dim, output_dim, hidden_dim = 64):
+        super(SimpleModel, self).__init__()
+        mlp = nn.Sequential(
+            nn.Linear(input_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(hidden_dim, output_dim)
+        )
+        self.mlp = MLP_SR(mlp, mlp_name = "Sequential")
+
+    def forward(self, x):
+        x = self.mlp(x)
+        return x
+
+
+def train_model(model, dataloader, opt, criterion, epochs = 100):
+    """
+    Train a model for the specified number of epochs.
+    
+    Args:
+        model: PyTorch model to train
+        dataloader: DataLoader for training data
+        opt: Optimizer
+        criterion: Loss function
+        epochs: Number of training epochs
+        
+    Returns:
+        tuple: (trained_model, loss_tracker)
+    """
+    loss_tracker = []
+    for epoch in range(epochs):
+        epoch_loss = 0.0
+        
+        for batch_x, batch_y in dataloader:
+            # Forward pass
+            pred = model(batch_x)
+            loss = criterion(pred, batch_y)
+            
+            # Backward pass
+            opt.zero_grad()
+            loss.backward()
+            opt.step()
+            
+            epoch_loss += loss.item()
+        
+        loss_tracker.append(epoch_loss)
+        if (epoch + 1) % 5 == 0:
+            avg_loss = epoch_loss / len(dataloader)
+            print(f'Epoch [{epoch+1}/{epochs}], Avg Loss: {avg_loss:.6f}')
+    return model, loss_tracker
+
+
+# Global test data and model setup
+np.random.seed(290402)  # For reproducible tests
+torch.manual_seed(290402)
+
+# Make the dataset 
+x = np.array([np.random.uniform(0, 1, 1_000) for _ in range(5)]).T  
+y = x[:, 0]**2 + 3*np.sin(x[:, 4]) - 4
+noise = np.array([np.random.normal(0, 0.05*np.std(y)) for _ in range(len(y))])
+y = y + noise 
+
+# Split into train and test
+X_train, _, y_train, _ = train_test_split(x, y.reshape(-1,1), test_size=0.2, random_state=290402)
+
+# Create the model and set up training
+model = SimpleModel(input_dim=x.shape[1], output_dim=1)
+criterion = nn.MSELoss()
+opt = optim.Adam(model.parameters(), lr=0.001)
+dataset = TensorDataset(torch.FloatTensor(X_train), torch.FloatTensor(y_train))
+dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
+
+# Global variable to store trained model for subsequent tests
+trained_model = None
+
+
+def test_training_MLP_SR_model():
+    """
+    Test that a MLP_SR wrapped model can be trained successfully.
+    """
+    global trained_model
+    try:
+        trained_model, losses = train_model(model, dataloader, opt, criterion, 20)
+        assert len(losses) == 20, "Should have loss for each epoch"
+        assert all(isinstance(loss, float) for loss in losses), "All losses should be floats"
+        
+    except Exception as e:
+        pytest.fail(f"MLP_SR model training failed with error {e}.")
+
+
+def test_MLP_SR_interpret():
+    """
+    Test that the interpret method works on a trained MLP_SR model.
+    """
+    global trained_model
+    if trained_model is None:
+        pytest.skip("No trained model available - training test may have failed")
+        
+    try:
+        # Create input data for interpretation
+        input_data = torch.FloatTensor(X_train[:100])  # Use subset for faster testing
+        
+        # Run interpretation with reduced iterations for testing
+        regressor = trained_model.mlp.interpret(input_data, niterations=50)
+        
+        # Verify regressor was created and has expected attributes
+        assert regressor is not None, "Regressor should not be None"
+        assert hasattr(regressor, 'equations_'), "Regressor should have equations_ attribute"
+        assert hasattr(regressor, 'get_best'), "Regressor should have get_best method"
+        
+        # Verify the MLP_SR object stored the regressor
+        assert hasattr(trained_model.mlp, 'pysr_regressor'), "MLP_SR should store the regressor"
+        assert trained_model.mlp.pysr_regressor is regressor, "Stored regressor should match returned regressor"
+        
+    except Exception as e:
+        pytest.fail(f"MLP_SR interpret method failed with error: {e}")
+    finally:
+        # Clean up SR output directory
+        cleanup_sr_outputs()
+
+
+def test_switch_to_equation():
+    """
+    Test that switch_to_equation method works correctly.
+    """
+    global trained_model
+    if trained_model is None:
+        pytest.skip("No trained model available - training test may have failed")
+        
+    # Ensure we have a regressor first
+    if not hasattr(trained_model.mlp, 'pysr_regressor') or trained_model.mlp.pysr_regressor is None:
+        input_data = torch.FloatTensor(X_train[:100])
+        trained_model.mlp.interpret(input_data, niterations=50)
+    
+    try:
+        # Test switching to equation
+        success = trained_model.mlp.switch_to_equation()
+        assert success, "switch_to_equation should return True on success"
+        
+        # Verify internal state
+        assert hasattr(trained_model.mlp, '_using_equation'), "Should have _using_equation attribute"
+        assert trained_model.mlp._using_equation, "Should be using equation mode"
+        assert hasattr(trained_model.mlp, '_equation_func'), "Should have _equation_func attribute"
+        assert hasattr(trained_model.mlp, '_var_indices'), "Should have _var_indices attribute"
+        
+        # Test forward pass still works
+        test_input = torch.FloatTensor(X_train[:10])
+        output = trained_model.mlp(test_input)
+        assert output is not None, "Forward pass should work in equation mode"
+        assert output.shape[0] == 10, "Output should have correct batch size"
+        
+    except Exception as e:
+        pytest.fail(f"switch_to_equation failed with error: {e}")
+    finally:
+        cleanup_sr_outputs()
+
+
+def test_switch_to_mlp():
+    """
+    Test that switch_to_mlp method works correctly.
+    """
+    global trained_model
+    if trained_model is None:
+        pytest.skip("No trained model available - training test may have failed")
+        
+    # Ensure we have a regressor first
+    if not hasattr(trained_model.mlp, 'pysr_regressor') or trained_model.mlp.pysr_regressor is None:
+        input_data = torch.FloatTensor(X_train[:100])
+        trained_model.mlp.interpret(input_data, niterations=50)
+    
+    # Switch to equation mode first
+    trained_model.mlp.switch_to_equation()
+    
+    try:
+        # Test switching back to MLP
+        success = trained_model.mlp.switch_to_mlp()
+        assert success, "switch_to_mlp should return True on success"
+        
+        # Verify internal state
+        assert hasattr(trained_model.mlp, '_using_equation'), "Should have _using_equation attribute"
+        assert not trained_model.mlp._using_equation, "Should not be using equation mode"
+        
+        # Test forward pass still works
+        test_input = torch.FloatTensor(X_train[:10])
+        output = trained_model.mlp(test_input)
+        assert output is not None, "Forward pass should work in MLP mode"
+        assert output.shape[0] == 10, "Output should have correct batch size"
+        
+    except Exception as e:
+        pytest.fail(f"switch_to_mlp failed with error: {e}")
+    finally:
+        cleanup_sr_outputs()
+
+
+def cleanup_sr_outputs():
+    """
+    Clean up SR output files and directories created during testing.
+    """
+    if os.path.exists('SR_output'):
+        shutil.rmtree('SR_output')
+    
+    # Clean up any other potential output files
+    for file in os.listdir('.'):
+        if file.startswith('hall_of_fame') or file.endswith('.pkl'):
+            try:
+                os.remove(file)
+            except OSError:
+                pass
+
+
+# Cleanup fixture to ensure files are cleaned up after all tests
+@pytest.fixture(scope="session", autouse=True)
+def cleanup_after_tests():
+    """
+    Fixture to clean up output files after all tests complete.
+    """
+    yield
+    cleanup_sr_outputs()
