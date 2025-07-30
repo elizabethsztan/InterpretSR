@@ -191,8 +191,8 @@ def test_switch_to_equation():
     
     try:
         # Test switching to equation
-        success = trained_model.mlp.switch_to_equation()
-        assert success, "switch_to_equation should return True on success"
+        trained_model.mlp.switch_to_equation()
+        assert trained_model.mlp._using_equation, "Should be using equation mode after switch"
         
         # Verify internal state
         assert hasattr(trained_model.mlp, '_using_equation'), "Should have _using_equation attribute"
@@ -408,8 +408,7 @@ def test_training_after_switch_to_equation():
         
         # Switch to equation mode
         print("Switching SR-wrapped MLP to equation mode...")
-        success = dual_model.sr_mlp.switch_to_equation()
-        assert success, "Switch to equation should succeed"
+        dual_model.sr_mlp.switch_to_equation()
         assert dual_model.sr_mlp._using_equation, "Should be in equation mode"
         
         # Continue training after switch - this is the key test
