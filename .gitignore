@@ -4,5 +4,6 @@ __pycache__
 .pytest_cache
 interpretsr.egg-info
 
-
+#demo weights 
+*.pth
 
