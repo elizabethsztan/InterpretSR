@@ -6,7 +6,7 @@ This section contains the complete API reference for InterpretSR.
 MLP_SR
 ~~~~~~
 
-.. autoclass:: mlp_sr.MLP_SR
+.. autoclass:: interpretsr.mlp_sr.MLP_SR
    :members:
    :undoc-members:
    :show-inheritance:
@@ -15,7 +15,7 @@ MLP_SR
 Loading Pre-Trained Model Weights
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autofunction:: utils.load_existing_weights_auto
+.. autofunction:: interpretsr.utils.load_existing_weights_auto
 
 Configuration and Parameters
 ----------------------------

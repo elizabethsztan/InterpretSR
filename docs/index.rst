@@ -22,4 +22,10 @@ Contents
 
    api_reference
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Demos:
+
+   demos/getting_started_demo.ipynb
+
 
