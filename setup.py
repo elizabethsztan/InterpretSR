@@ -10,8 +10,9 @@ setup(
     description="Neural Networks with Symbolic Regression for Interpretable Machine Learning",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    packages=["src"],
     python_requires=">=3.11",
+    package_dir={"": "src"},
+    packages=find_packages(where="src"),
     install_requires=[
         "torch",
         "pysr",
