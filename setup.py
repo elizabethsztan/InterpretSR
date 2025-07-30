@@ -6,8 +6,9 @@ with open("README.md", "r", encoding="utf-8") as fh:
 setup(
     name="interpretsr",
     version="1.0.1",
-    author="InterpretSR Team",
-    description="Neural Networks with Symbolic Regression for Interpretable Machine Learning",
+    author="Liz Tan",
+    author_email= "eszt2@cam.ac.uk",
+    description="Deep Learning Interpretability with Symbolic Regression.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     python_requires=">=3.11",
