@@ -3,6 +3,7 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../src'))
+sys.path.insert(0, os.path.abspath('../../'))
 
 project = 'InterpretSR'
 author = 'Liz Tan'
@@ -14,10 +15,13 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.intersphinx',
     'sphinx_autodoc_typehints',
+    'myst_nb'
 ]
 
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+
+nb_execution_mode = "off"
 
 language = 'en'
 
@@ -63,3 +67,7 @@ intersphinx_mapping = {
 always_document_param_types = True
 typehints_use_signature = True
 typehints_use_signature_return = True
+
+# MathJax configuration - MyST-NB handles MathJax automatically
+# We only need to ensure the proper delimiters are configured
+myst_enable_extensions = ["dollarmath"]
