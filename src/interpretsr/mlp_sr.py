@@ -156,6 +156,7 @@ class MLP_SR(nn.Module):
             "unary_operators": ["inv(x) = 1/x", "sin", "exp"],
             "extra_sympy_mappings": {"inv": lambda x: 1/x},
             "niterations": 400,
+            "complexity_of_operators": {"sin": 3, "exp":3},
             "output_directory": output_name,
             "run_id": run_id
         }
@@ -220,9 +221,6 @@ class MLP_SR(nn.Module):
         Args:
             complexity (int, optional): Specific complexity level to use.
                                       If None, uses the best overall equation.
-                                      
-        Returns:
-            bool: True if switch was successful, False otherwise
             
         Example:
             >>> model.switch_to_equation(complexity=5)
@@ -230,7 +228,7 @@ class MLP_SR(nn.Module):
         """
         result = self._get_equation(complexity)
         if result is None:
-            return False
+            return
             
         f, vars_sorted = result
         
@@ -248,18 +246,24 @@ class MLP_SR(nn.Module):
                     var_indices.append(idx)
                 except ValueError:
                     print(f"⚠️ Warning: Could not parse variable {var_str}")
-                    return False
+                    return
             else:
                 print(f"⚠️ Warning: Unexpected variable format {var_str}")
-                return False
+                return
         
         self._var_indices = var_indices
         self._equation_func = f
         self._using_equation = True
         
-        print(f"✅ Successfully switched {self.mlp_name} to symbolic equation.")
+        # Get the equation string for display
+        if complexity is None:
+            equation_str = self.pysr_regressor.get_best()["equation"]
+        else:
+            matching_rows = self.pysr_regressor.equations_[self.pysr_regressor.equations_["complexity"] == complexity]
+            equation_str = matching_rows["equation"].values[0]
+        
+        print(f"✅ Successfully switched {self.mlp_name} to symbolic equation: {equation_str}")
         print(f"📊 Using variables: {[f'x{i}' for i in var_indices]}.")
-        return True
    
     def switch_to_mlp(self):
         """
