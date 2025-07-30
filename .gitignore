@@ -7,3 +7,6 @@ interpretsr.egg-info
 #demo weights 
 *.pth
 
+#pysr outputs
+docs/SR_output
+
