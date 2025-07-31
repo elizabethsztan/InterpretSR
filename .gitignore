@@ -2,7 +2,7 @@
 
 __pycache__
 .pytest_cache
-interpretsr.egg-info
+torch_symbolic.egg-info
 
 #demo weights 
 *.pth
