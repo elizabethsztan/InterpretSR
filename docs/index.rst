@@ -1,4 +1,4 @@
-.. image:: _static/InterpretSR_header.png
+.. image:: _static/symtorch_logo.png
    :alt: Description
    :width: 100%
 
