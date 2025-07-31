@@ -2,16 +2,16 @@
    :alt: Description
    :width: 100%
 
-*InterpretSR* allows you to approximate the behaviour of multi-layer perceptrons (MLPs) in deep learning models with symbolic equations using `PySR <https://ai.damtp.cam.ac.uk/pysr/>`_.
+*SymTorch* allows you to approximate the behaviour of multi-layer perceptrons (MLPs) in deep learning models with symbolic equations using `PySR <https://ai.damtp.cam.ac.uk/pysr/>`_.
 
 Installation
 ============
 
-To install *InterpretSR*,
+To install *SymTorch*,
 
 .. code-block:: bash
 
-   pip install interpretsr
+   pip install torch-symbolic
 
 Contents
 ========

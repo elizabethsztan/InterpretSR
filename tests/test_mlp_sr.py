@@ -13,7 +13,7 @@ import numpy as np
 src_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'src')
 sys.path.insert(0, src_path)
 
-from interpretsr.mlp_sr import MLP_SR
+from symtorch.mlp_sr import MLP_SR
 
 
 def test_MLP_SR_wrapper():

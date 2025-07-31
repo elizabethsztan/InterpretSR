@@ -4,7 +4,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
-    name="interpretsr",
+    name="torch-symbolic",
     version="1.0.2",
     author="Liz Tan",
     author_email= "eszt2@cam.ac.uk",

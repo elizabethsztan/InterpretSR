@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>interpretsr.mlp_sr &mdash; InterpretSR 1.0.0 documentation</title>
+  <title>symtorch.mlp_sr &mdash; SymTorch 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
@@ -30,7 +30,7 @@
           
           
           <a href="../../index.html" class="icon icon-home">
-            InterpretSR
+            SymTorch
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -55,7 +55,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../index.html">InterpretSR</a>
+          <a href="../../index.html">SymTorch</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -64,7 +64,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
-      <li class="breadcrumb-item active">interpretsr.mlp_sr</li>
+      <li class="breadcrumb-item active">symtorch.mlp_sr</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -73,7 +73,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <h1>Source code for interpretsr.mlp_sr</h1><div class="highlight"><pre>
+  <h1>Source code for symtorch.mlp_sr</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">InterpretSR MLP_SR Module</span>
 
@@ -89,7 +89,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">sympy</span><span class="w"> </span><span class="kn">import</span> <span class="n">lambdify</span>
 
 <div class="viewcode-block" id="MLP_SR">
-<a class="viewcode-back" href="../../api_reference.html#interpretsr.mlp_sr.MLP_SR">[docs]</a>
+<a class="viewcode-back" href="../../api_reference.html#symtorch.mlp_sr.MLP_SR">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MLP_SR</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A PyTorch module wrapper that adds symbolic regression capabilities to MLPs.</span>
@@ -144,7 +144,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     
 <div class="viewcode-block" id="MLP_SR.__init__">
-<a class="viewcode-back" href="../../api_reference.html#interpretsr.mlp_sr.MLP_SR.__init__">[docs]</a>
+<a class="viewcode-back" href="../../api_reference.html#symtorch.mlp_sr.MLP_SR.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mlp</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">mlp_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialise the MLP_SR wrapper.</span>
@@ -162,7 +162,7 @@
 
     
 <div class="viewcode-block" id="MLP_SR.forward">
-<a class="viewcode-back" href="../../api_reference.html#interpretsr.mlp_sr.MLP_SR.forward">[docs]</a>
+<a class="viewcode-back" href="../../api_reference.html#symtorch.mlp_sr.MLP_SR.forward">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Forward pass through the model.</span>
@@ -206,7 +206,7 @@
 
 
 <div class="viewcode-block" id="MLP_SR.interpret">
-<a class="viewcode-back" href="../../api_reference.html#interpretsr.mlp_sr.MLP_SR.interpret">[docs]</a>
+<a class="viewcode-back" href="../../api_reference.html#symtorch.mlp_sr.MLP_SR.interpret">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">interpret</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Discover symbolic expressions that approximate the MLP&#39;s behavior.</span>
@@ -298,7 +298,7 @@
         <span class="k">return</span> <span class="n">f</span><span class="p">,</span> <span class="n">vars_sorted</span>
 
 <div class="viewcode-block" id="MLP_SR.switch_to_equation">
-<a class="viewcode-back" href="../../api_reference.html#interpretsr.mlp_sr.MLP_SR.switch_to_equation">[docs]</a>
+<a class="viewcode-back" href="../../api_reference.html#symtorch.mlp_sr.MLP_SR.switch_to_equation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">switch_to_equation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">complexity</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Switch the forward pass from MLP to symbolic equation.</span>
@@ -356,7 +356,7 @@
 
    
 <div class="viewcode-block" id="MLP_SR.switch_to_mlp">
-<a class="viewcode-back" href="../../api_reference.html#interpretsr.mlp_sr.MLP_SR.switch_to_mlp">[docs]</a>
+<a class="viewcode-back" href="../../api_reference.html#symtorch.mlp_sr.MLP_SR.switch_to_mlp">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">switch_to_mlp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Switch back to using the original MLP for forward passes.</span>

@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Getting Started &mdash; InterpretSR 1.0.0 documentation</title>
+  <title>Getting Started &mdash; SymTorch 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
@@ -34,7 +34,7 @@
           
           
           <a href="../index.html" class="icon icon-home">
-            InterpretSR
+            SymTorch
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -65,7 +65,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../index.html">InterpretSR</a>
+          <a href="../index.html">SymTorch</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -217,7 +217,7 @@ Epoch [20/20], Avg Loss: 0.037509
 <p>Now, create a new model with the same architecture as the previous model but wrap the MLP.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">interpretsr.mlp_sr</span><span class="w"> </span><span class="kn">import</span> <span class="n">MLP_SR</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">symtorch.mlp_sr</span><span class="w"> </span><span class="kn">import</span> <span class="n">MLP_SR</span>
 
 <span class="k">class</span><span class="w"> </span><span class="nc">SimpleModel_SR</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -245,20 +245,11 @@ Epoch [20/20], Avg Loss: 0.037509
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/Users/liz/PhD/InterpretSR_project/interpretsr_venv/lib/python3.11/site-packages/juliacall/__init__.py:61: UserWarning: torch was imported before juliacall. This may cause a segfault. To avoid this, import juliacall before importing torch. For updates, see https://github.com/pytorch/pytorch/issues/78829.
-  warnings.warn(
-</pre></div>
-</div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Detected IPython. Loading juliacall extension. See https://juliapy.github.io/PythonCall.jl/stable/compat/#IPython
-</pre></div>
-</div>
-</div>
 </div>
 <p>Load the already trained weights onto the new model.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">interpretsr.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_existing_weights_auto</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">symtorch.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_existing_weights_auto</span>
 
 <span class="c1"># Instantiate the new model</span>
 <span class="n">model_SR</span> <span class="o">=</span> <span class="n">SimpleModel_SR</span><span class="p">(</span><span class="n">input_dim</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">output_dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -268,11 +259,6 @@ Epoch [20/20], Avg Loss: 0.037509
 
 <span class="c1"># Load the weights onto the interpretable model</span>
 <span class="n">model_SR</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;All keys matched successfully&gt;
 </pre></div>
 </div>
 </div>

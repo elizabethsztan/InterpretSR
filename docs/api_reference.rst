@@ -1,12 +1,12 @@
 API Reference
 =============
 
-This section contains the complete API reference for InterpretSR.
+This section contains the complete API reference for SymTorch.
 
 MLP_SR
 ~~~~~~
 
-.. autoclass:: interpretsr.mlp_sr.MLP_SR
+.. autoclass:: symtorch.mlp_sr.MLP_SR
    :members:
    :undoc-members:
    :show-inheritance:
@@ -15,7 +15,7 @@ MLP_SR
 Loading Pre-Trained Model Weights
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autofunction:: interpretsr.utils.load_existing_weights_auto
+.. autofunction:: symtorch.utils.load_existing_weights_auto
 
 Configuration and Parameters
 ----------------------------

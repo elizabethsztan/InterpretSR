@@ -5,7 +5,7 @@ import sys
 sys.path.insert(0, os.path.abspath('../src'))
 sys.path.insert(0, os.path.abspath('../../'))
 
-project = 'InterpretSR'
+project = 'SymTorch'
 author = 'Liz Tan'
 release = '1.0.0'
 

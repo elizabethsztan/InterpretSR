@@ -1,5 +1,5 @@
 """
-Core InterpretSR modules
+Core SymTorch modules
 """
 
 from .mlp_sr import MLP_SR

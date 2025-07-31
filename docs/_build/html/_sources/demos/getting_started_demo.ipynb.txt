@@ -175,53 +175,11 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 5,
+   "execution_count": null,
    "id": "0b5544e2",
    "metadata": {},
-   "outputs": [
-    {
-     "name": "stderr",
-     "output_type": "stream",
-     "text": [
-      "/Users/liz/PhD/InterpretSR_project/interpretsr_venv/lib/python3.11/site-packages/juliacall/__init__.py:61: UserWarning: torch was imported before juliacall. This may cause a segfault. To avoid this, import juliacall before importing torch. For updates, see https://github.com/pytorch/pytorch/issues/78829.\n",
-      "  warnings.warn(\n"
-     ]
-    },
-    {
-     "name": "stdout",
-     "output_type": "stream",
-     "text": [
-      "Detected IPython. Loading juliacall extension. See https://juliapy.github.io/PythonCall.jl/stable/compat/#IPython\n"
-     ]
-    }
-   ],
-   "source": [
-    "from interpretsr.mlp_sr import MLP_SR\n",
-    "\n",
-    "class SimpleModel_SR(nn.Module):\n",
-    "    \"\"\"\n",
-    "    Simple model class.\n",
-    "    \"\"\"\n",
-    "    def __init__(self, input_dim, output_dim, hidden_dim = 64):\n",
-    "        super(SimpleModel_SR, self).__init__()\n",
-    "        mlp = nn.Sequential(\n",
-    "            nn.Linear(input_dim, hidden_dim),\n",
-    "            nn.ReLU(),\n",
-    "            nn.Dropout(0.2),\n",
-    "            nn.Linear(hidden_dim, hidden_dim),\n",
-    "            nn.ReLU(),\n",
-    "            nn.Dropout(0.2),\n",
-    "            nn.Linear(hidden_dim, hidden_dim),\n",
-    "            nn.ReLU(),\n",
-    "            nn.Dropout(0.2),\n",
-    "            nn.Linear(hidden_dim, output_dim)\n",
-    "        )\n",
-    "        self.mlp = MLP_SR(mlp, mlp_name= 'Sequential') # Wrap the MLP \n",
-    "\n",
-    "    def forward(self, x):\n",
-    "        x = self.mlp(x)\n",
-    "        return x"
-   ]
+   "outputs": [],
+   "source": "from symtorch.mlp_sr import MLP_SR\n\nclass SimpleModel_SR(nn.Module):\n    \"\"\"\n    Simple model class.\n    \"\"\"\n    def __init__(self, input_dim, output_dim, hidden_dim = 64):\n        super(SimpleModel_SR, self).__init__()\n        mlp = nn.Sequential(\n            nn.Linear(input_dim, hidden_dim),\n            nn.ReLU(),\n            nn.Dropout(0.2),\n            nn.Linear(hidden_dim, hidden_dim),\n            nn.ReLU(),\n            nn.Dropout(0.2),\n            nn.Linear(hidden_dim, hidden_dim),\n            nn.ReLU(),\n            nn.Dropout(0.2),\n            nn.Linear(hidden_dim, output_dim)\n        )\n        self.mlp = MLP_SR(mlp, mlp_name= 'Sequential') # Wrap the MLP \n\n    def forward(self, x):\n        x = self.mlp(x)\n        return x"
   },
   {
    "cell_type": "markdown",
@@ -233,33 +191,11 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 6,
+   "execution_count": null,
    "id": "70558a31",
    "metadata": {},
-   "outputs": [
-    {
-     "data": {
-      "text/plain": [
-       "<All keys matched successfully>"
-      ]
-     },
-     "execution_count": 6,
-     "metadata": {},
-     "output_type": "execute_result"
-    }
-   ],
-   "source": [
-    "from interpretsr.utils import load_existing_weights_auto\n",
-    "\n",
-    "# Instantiate the new model\n",
-    "model_SR = SimpleModel_SR(input_dim=x.shape[1], output_dim=1)\n",
-    "\n",
-    "# Create compatible weights for interpretsr\n",
-    "weights = load_existing_weights_auto('model_weights.pth', model_SR)\n",
-    "\n",
-    "# Load the weights onto the interpretable model\n",
-    "model_SR.load_state_dict(weights)"
-   ]
+   "outputs": [],
+   "source": "from symtorch.utils import load_existing_weights_auto\n\n# Instantiate the new model\nmodel_SR = SimpleModel_SR(input_dim=x.shape[1], output_dim=1)\n\n# Create compatible weights for interpretsr\nweights = load_existing_weights_auto('model_weights.pth', model_SR)\n\n# Load the weights onto the interpretable model\nmodel_SR.load_state_dict(weights)"
   },
   {
    "cell_type": "markdown",

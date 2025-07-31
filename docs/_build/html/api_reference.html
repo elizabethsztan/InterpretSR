@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>API Reference &mdash; InterpretSR 1.0.0 documentation</title>
+  <title>API Reference &mdash; SymTorch 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
@@ -33,7 +33,7 @@
           
           
           <a href="index.html" class="icon icon-home">
-            InterpretSR
+            SymTorch
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -47,21 +47,21 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#mlp-sr">MLP_SR</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#interpretsr.mlp_sr.MLP_SR"><code class="docutils literal notranslate"><span class="pre">MLP_SR</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#interpretsr.mlp_sr.MLP_SR.InterpretSR_MLP"><code class="docutils literal notranslate"><span class="pre">MLP_SR.InterpretSR_MLP</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#interpretsr.mlp_sr.MLP_SR.mlp_name"><code class="docutils literal notranslate"><span class="pre">MLP_SR.mlp_name</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#interpretsr.mlp_sr.MLP_SR.pysr_regressor"><code class="docutils literal notranslate"><span class="pre">MLP_SR.pysr_regressor</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#interpretsr.mlp_sr.MLP_SR.__init__"><code class="docutils literal notranslate"><span class="pre">MLP_SR.__init__()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#interpretsr.mlp_sr.MLP_SR.forward"><code class="docutils literal notranslate"><span class="pre">MLP_SR.forward()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#interpretsr.mlp_sr.MLP_SR.interpret"><code class="docutils literal notranslate"><span class="pre">MLP_SR.interpret()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#interpretsr.mlp_sr.MLP_SR.switch_to_equation"><code class="docutils literal notranslate"><span class="pre">MLP_SR.switch_to_equation()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#interpretsr.mlp_sr.MLP_SR.switch_to_mlp"><code class="docutils literal notranslate"><span class="pre">MLP_SR.switch_to_mlp()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#symtorch.mlp_sr.MLP_SR"><code class="docutils literal notranslate"><span class="pre">MLP_SR</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#symtorch.mlp_sr.MLP_SR.InterpretSR_MLP"><code class="docutils literal notranslate"><span class="pre">MLP_SR.InterpretSR_MLP</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#symtorch.mlp_sr.MLP_SR.mlp_name"><code class="docutils literal notranslate"><span class="pre">MLP_SR.mlp_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#symtorch.mlp_sr.MLP_SR.pysr_regressor"><code class="docutils literal notranslate"><span class="pre">MLP_SR.pysr_regressor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#symtorch.mlp_sr.MLP_SR.__init__"><code class="docutils literal notranslate"><span class="pre">MLP_SR.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#symtorch.mlp_sr.MLP_SR.forward"><code class="docutils literal notranslate"><span class="pre">MLP_SR.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#symtorch.mlp_sr.MLP_SR.interpret"><code class="docutils literal notranslate"><span class="pre">MLP_SR.interpret()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#symtorch.mlp_sr.MLP_SR.switch_to_equation"><code class="docutils literal notranslate"><span class="pre">MLP_SR.switch_to_equation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#symtorch.mlp_sr.MLP_SR.switch_to_mlp"><code class="docutils literal notranslate"><span class="pre">MLP_SR.switch_to_mlp()</span></code></a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#loading-pre-trained-model-weights">Loading Pre-Trained Model Weights</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#interpretsr.utils.load_existing_weights_auto"><code class="docutils literal notranslate"><span class="pre">load_existing_weights_auto()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#symtorch.utils.load_existing_weights_auto"><code class="docutils literal notranslate"><span class="pre">load_existing_weights_auto()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#configuration-and-parameters">Configuration and Parameters</a></li>
 </ul>
 </li>
@@ -80,7 +80,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">InterpretSR</a>
+          <a href="index.html">SymTorch</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -100,12 +100,12 @@
              
   <section id="api-reference">
 <h1>API Reference<a class="headerlink" href="#api-reference" title="Link to this heading"></a></h1>
-<p>This section contains the complete API reference for InterpretSR.</p>
+<p>This section contains the complete API reference for SymTorch.</p>
 <section id="mlp-sr">
 <h2>MLP_SR<a class="headerlink" href="#mlp-sr" title="Link to this heading"></a></h2>
 <dl class="py class">
-<dt class="sig sig-object py" id="interpretsr.mlp_sr.MLP_SR">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">interpretsr.mlp_sr.</span></span><span class="sig-name descname"><span class="pre">MLP_SR</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mlp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.7)"><span class="pre">Module</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">mlp_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/interpretsr/mlp_sr.html#MLP_SR"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#interpretsr.mlp_sr.MLP_SR" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="symtorch.mlp_sr.MLP_SR">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">symtorch.mlp_sr.</span></span><span class="sig-name descname"><span class="pre">MLP_SR</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mlp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.7)"><span class="pre">Module</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">mlp_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/symtorch/mlp_sr.html#MLP_SR"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#symtorch.mlp_sr.MLP_SR" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a></p>
 <p>A PyTorch module wrapper that adds symbolic regression capabilities to MLPs.</p>
 <p>This class wraps any PyTorch MLP (Multi-Layer Perceptron) and provides methods
@@ -114,8 +114,8 @@ behavior using genetic algorithms supported by PySR.</p>
 <p>The wrapper maintains full compatibility with PyTorch’s training pipeline while
 adding interpretability features through symbolic regression.</p>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="interpretsr.mlp_sr.MLP_SR.InterpretSR_MLP">
-<span class="sig-name descname"><span class="pre">InterpretSR_MLP</span></span><a class="headerlink" href="#interpretsr.mlp_sr.MLP_SR.InterpretSR_MLP" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="symtorch.mlp_sr.MLP_SR.InterpretSR_MLP">
+<span class="sig-name descname"><span class="pre">InterpretSR_MLP</span></span><a class="headerlink" href="#symtorch.mlp_sr.MLP_SR.InterpretSR_MLP" title="Link to this definition"></a></dt>
 <dd><p>The wrapped PyTorch MLP model</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -125,8 +125,8 @@ adding interpretability features through symbolic regression.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="interpretsr.mlp_sr.MLP_SR.mlp_name">
-<span class="sig-name descname"><span class="pre">mlp_name</span></span><a class="headerlink" href="#interpretsr.mlp_sr.MLP_SR.mlp_name" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="symtorch.mlp_sr.MLP_SR.mlp_name">
+<span class="sig-name descname"><span class="pre">mlp_name</span></span><a class="headerlink" href="#symtorch.mlp_sr.MLP_SR.mlp_name" title="Link to this definition"></a></dt>
 <dd><p>Human-readable name for the MLP instance</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -136,8 +136,8 @@ adding interpretability features through symbolic regression.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="interpretsr.mlp_sr.MLP_SR.pysr_regressor">
-<span class="sig-name descname"><span class="pre">pysr_regressor</span></span><a class="headerlink" href="#interpretsr.mlp_sr.MLP_SR.pysr_regressor" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="symtorch.mlp_sr.MLP_SR.pysr_regressor">
+<span class="sig-name descname"><span class="pre">pysr_regressor</span></span><a class="headerlink" href="#symtorch.mlp_sr.MLP_SR.pysr_regressor" title="Link to this definition"></a></dt>
 <dd><p>The fitted symbolic regression model</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -192,8 +192,8 @@ adding interpretability features through symbolic regression.</p>
 </dd>
 </dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="interpretsr.mlp_sr.MLP_SR.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mlp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.7)"><span class="pre">Module</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">mlp_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/interpretsr/mlp_sr.html#MLP_SR.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#interpretsr.mlp_sr.MLP_SR.__init__" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="symtorch.mlp_sr.MLP_SR.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mlp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.7)"><span class="pre">Module</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">mlp_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/symtorch/mlp_sr.html#MLP_SR.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#symtorch.mlp_sr.MLP_SR.__init__" title="Link to this definition"></a></dt>
 <dd><p>Initialise the MLP_SR wrapper.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -207,8 +207,8 @@ If None, generates a unique name based on object ID.</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="interpretsr.mlp_sr.MLP_SR.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/interpretsr/mlp_sr.html#MLP_SR.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#interpretsr.mlp_sr.MLP_SR.forward" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="symtorch.mlp_sr.MLP_SR.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/symtorch/mlp_sr.html#MLP_SR.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#symtorch.mlp_sr.MLP_SR.forward" title="Link to this definition"></a></dt>
 <dd><p>Forward pass through the model.</p>
 <p>Automatically switches between MLP and symbolic equation based on current mode.
 When using symbolic equation mode, extracts only the required input variables
@@ -230,8 +230,8 @@ and evaluates the discovered symbolic expression.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="interpretsr.mlp_sr.MLP_SR.interpret">
-<span class="sig-name descname"><span class="pre">interpret</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/interpretsr/mlp_sr.html#MLP_SR.interpret"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#interpretsr.mlp_sr.MLP_SR.interpret" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="symtorch.mlp_sr.MLP_SR.interpret">
+<span class="sig-name descname"><span class="pre">interpret</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/symtorch/mlp_sr.html#MLP_SR.interpret"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#symtorch.mlp_sr.MLP_SR.interpret" title="Link to this definition"></a></dt>
 <dd><p>Discover symbolic expressions that approximate the MLP’s behavior.</p>
 <p>Uses PySR to find mathematical expressions that best fit the input-output relationship learned by the neural network.</p>
 <dl class="field-list simple">
@@ -266,8 +266,8 @@ are stored</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="interpretsr.mlp_sr.MLP_SR.switch_to_equation">
-<span class="sig-name descname"><span class="pre">switch_to_equation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">complexity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/interpretsr/mlp_sr.html#MLP_SR.switch_to_equation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#interpretsr.mlp_sr.MLP_SR.switch_to_equation" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="symtorch.mlp_sr.MLP_SR.switch_to_equation">
+<span class="sig-name descname"><span class="pre">switch_to_equation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">complexity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/symtorch/mlp_sr.html#MLP_SR.switch_to_equation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#symtorch.mlp_sr.MLP_SR.switch_to_equation" title="Link to this definition"></a></dt>
 <dd><p>Switch the forward pass from MLP to symbolic equation.</p>
 <p>After calling this method, the model will use the discovered symbolic
 expression instead of the neural network for forward passes. This maintains
@@ -285,8 +285,8 @@ If None, uses the best overall equation.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="interpretsr.mlp_sr.MLP_SR.switch_to_mlp">
-<span class="sig-name descname"><span class="pre">switch_to_mlp</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/interpretsr/mlp_sr.html#MLP_SR.switch_to_mlp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#interpretsr.mlp_sr.MLP_SR.switch_to_mlp" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="symtorch.mlp_sr.MLP_SR.switch_to_mlp">
+<span class="sig-name descname"><span class="pre">switch_to_mlp</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/symtorch/mlp_sr.html#MLP_SR.switch_to_mlp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#symtorch.mlp_sr.MLP_SR.switch_to_mlp" title="Link to this definition"></a></dt>
 <dd><p>Switch back to using the original MLP for forward passes.</p>
 <p>Restores the neural network as the primary forward pass mechanism,
 reverting any previous switch_to_equation() call.</p>
@@ -312,8 +312,8 @@ reverting any previous switch_to_equation() call.</p>
 <section id="loading-pre-trained-model-weights">
 <h2>Loading Pre-Trained Model Weights<a class="headerlink" href="#loading-pre-trained-model-weights" title="Link to this heading"></a></h2>
 <dl class="py function">
-<dt class="sig sig-object py" id="interpretsr.utils.load_existing_weights_auto">
-<span class="sig-prename descclassname"><span class="pre">interpretsr.utils.</span></span><span class="sig-name descname"><span class="pre">load_existing_weights_auto</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/interpretsr/utils.html#load_existing_weights_auto"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#interpretsr.utils.load_existing_weights_auto" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="symtorch.utils.load_existing_weights_auto">
+<span class="sig-prename descclassname"><span class="pre">symtorch.utils.</span></span><span class="sig-name descname"><span class="pre">load_existing_weights_auto</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/symtorch/utils.html#load_existing_weights_auto"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#symtorch.utils.load_existing_weights_auto" title="Link to this definition"></a></dt>
 <dd><p>Automatically detect MLP_SR wrappers in target model and create appropriate mappings.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>

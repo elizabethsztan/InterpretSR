@@ -8,8 +8,8 @@ import pytest
 src_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'src')
 sys.path.insert(0, src_path)
 
-from interpretsr.mlp_sr import MLP_SR
-from interpretsr.utils import *
+from symtorch.mlp_sr import MLP_SR
+from symtorch.utils import *
 
 class SimpleOriginal(nn.Module):
     """
