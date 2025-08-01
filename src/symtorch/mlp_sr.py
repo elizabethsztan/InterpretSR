@@ -186,7 +186,7 @@ class MLP_SR(nn.Module):
 
             for dim in range(output_dims):
 
-                print(f"🛠️ Running SR on output dimension {dim} of {output_dims}")
+                print(f"🛠️ Running SR on output dimension {dim} of {output_dims-1}")
         
                 run_id = f"dim{dim}_{timestamp}"
                 output_name = f"SR_output/{self.mlp_name}"
@@ -286,7 +286,7 @@ class MLP_SR(nn.Module):
         f = lambdify(vars_sorted, expr, "numpy")
         return f, vars_sorted
 
-    def switch_to_equation(self, complexity: int = None):
+    def switch_to_equation(self, complexity: list = None):
         """
         Switch the forward pass from MLP to symbolic equations for all output dimensions.
         
@@ -295,7 +295,7 @@ class MLP_SR(nn.Module):
         equations to be available for ALL output dimensions.
         
         Args:
-            complexity (int, optional): Specific complexity level to use.
+            complexity (list, optional): Specific complexity levels to use for each dimension.
                                       If None, uses the best overall equation for each dimension.
             
         Example:
@@ -332,7 +332,19 @@ class MLP_SR(nn.Module):
         equation_strs = {}
         
         for dim in range(self.output_dims):
-            result = self._get_equation(dim, complexity)
+            # Get complexity for this specific dimension
+            dim_complexity = None
+            if complexity is not None:
+                if isinstance(complexity, list):
+                    if dim < len(complexity):
+                        dim_complexity = complexity[dim]
+                    else:
+                        print(f"⚠️ Warning: Not enough complexity values provided. Using default for dimension {dim}")
+                else:
+                    # If complexity is a single value, use it for all dimensions
+                    dim_complexity = complexity
+            
+            result = self._get_equation(dim, dim_complexity)
             if result is None:
                 print(f"⚠️ Failed to get equation for dimension {dim}")
                 return
@@ -359,10 +371,10 @@ class MLP_SR(nn.Module):
             
             # Get equation string for display
             regressor = self.pysr_regressor[dim]
-            if complexity is None:
+            if dim_complexity is None:
                 equation_strs[dim] = regressor.get_best()["equation"]
             else:
-                matching_rows = regressor.equations_[regressor.equations_["complexity"] == complexity]
+                matching_rows = regressor.equations_[regressor.equations_["complexity"] == dim_complexity]
                 equation_strs[dim] = matching_rows["equation"].values[0]
         
         # Store the equation information
