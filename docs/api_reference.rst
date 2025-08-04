@@ -12,10 +12,13 @@ MLP_SR
    :show-inheritance:
 
 
-Loading Pre-Trained Model Weights
+toolkit
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autofunction:: symtorch.utils.load_existing_weights_auto
+.. autoclass:: symtorch.toolkit.Pruning_MLP
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Configuration and Parameters
 ----------------------------
