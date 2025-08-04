@@ -9,15 +9,83 @@ from pysr import PySRRegressor
 from .mlp_sr import MLP_SR
 
 class Pruning_MLP(MLP_SR):
+    """
+    A PyTorch module wrapper that adds dynamic pruning and symbolic regression capabilities to MLPs.
+    
+    This class extends MLP_SR to provide progressive dimensionality reduction through pruning
+    while maintaining interpretability features. It dynamically removes less important output
+    dimensions during training based on activation variance, then applies symbolic regression
+    to the remaining active dimensions.
+    
+    The wrapper maintains full compatibility with PyTorch's training pipeline and inherits
+    all MLP_SR functionality for symbolic regression on pruned dimensions.
+    
+    Attributes:
+        InterpretSR_MLP (nn.Module): The wrapped PyTorch MLP model (inherited from MLP_SR)
+        mlp_name (str): Human-readable name for the MLP instance (inherited from MLP_SR)
+        pysr_regressor (dict): Dictionary mapping active dimensions to fitted symbolic regression models (inherited from MLP_SR)
+        initial_dim (int): Initial output dimensionality before pruning
+        current_dim (int): Current number of active dimensions
+        target_dim (int): Final target dimensionality after pruning
+        pruning_schedule (dict): Mapping from epoch to target dimensions
+        pruning_mask (torch.Tensor): Boolean mask indicating active dimensions
+        
+    Example:
+        >>> import torch
+        >>> import torch.nn as nn
+        >>> from symtorch.toolkit import Pruning_MLP
+        >>> 
+        >>> # Create a composite model
+        >>> class SimpleModel(nn.Module):
+        ...     def __init__(self, input_dim, output_dim, output_dim_f=32, hidden_dim=128):
+        ...         super(SimpleModel, self).__init__()
+        ...         self.f_net = nn.Sequential(
+        ...             nn.Linear(input_dim, hidden_dim),
+        ...             nn.ReLU(),
+        ...             nn.Linear(hidden_dim, output_dim_f)
+        ...         )
+        ...         self.g_net = nn.Linear(output_dim_f, output_dim)
+        ...     
+        ...     def forward(self, x):
+        ...         x = self.f_net(x)
+        ...         x = self.g_net(x)
+        ...         return x
+        >>> 
+        >>> # Create model and wrap f_net with pruning
+        >>> model = SimpleModel(input_dim=5, output_dim=1, output_dim_f=32)
+        >>> model.f_net = Pruning_MLP(model.f_net, 
+        ...                          initial_dim=32, 
+        ...                          target_dim=2, 
+        ...                          mlp_name="f_net")
+        >>> 
+        >>> # Set up pruning schedule
+        >>> epochs = 100
+        >>> model.f_net.set_schedule(total_epochs=epochs, end_epoch_frac=0.7)
+        >>> 
+        >>> # During training loop
+        >>> for epoch in range(epochs):
+        ...     # ... training code ...
+        ...     model.f_net.prune(epoch, validation_data)  # Prune based on importance
+        >>> 
+        >>> # Apply symbolic regression to active dimensions only
+        >>> regressor = model.f_net.interpret(train_inputs)
+        >>> 
+        >>> # Switch to using symbolic equations for active dimensions
+        >>> model.f_net.switch_to_equation()
+        >>> # Switch back to using the MLP
+        >>> model.f_net.switch_to_mlp()
+    """
+    
     def __init__(self, mlp: nn.Module, initial_dim: int, target_dim: int, mlp_name: str = None):
         """
-        Initialise the pruning wrapper that inherits MLP_SR functionality.
+        Initialise the Pruning_MLP wrapper.
         
         Args:
-            mlp (nn.Module): The PyTorch MLP model to wrap.
+            mlp (nn.Module): The PyTorch MLP model to wrap
             initial_dim (int): Initial output dimensionality before pruning
             target_dim (int): Target output dimensionality after pruning
-            mlp_name (str): Name for the MLP (used by MLP_SR for output directories)
+            mlp_name (str, optional): Human-readable name for this MLP instance.
+                                    If None, generates a unique name based on object ID.
         """
         # Initialize MLP_SR with the MLP
         super().__init__(mlp, mlp_name or f"pruned_mlp_{id(self)}")
@@ -30,13 +98,39 @@ class Pruning_MLP(MLP_SR):
         self.pruning_mask = torch.ones(self.current_dim, dtype=torch.bool)
     
     def forward(self, x):
-        """Forward pass with pruning mask applied to MLP_SR output."""
+        """
+        Forward pass with pruning mask applied to MLP_SR output.
+        
+        Args:
+            x (torch.Tensor): Input tensor of shape (batch_size, input_dim)
+            
+        Returns:
+            torch.Tensor: Output tensor with inactive dimensions masked to zero
+        """
         # Use parent's forward method (handles symbolic/MLP switching)
         output = super().forward(x)
-        # Apply pruning mask
+        # Apply pruning mask to zero out inactive dimensions
         return output * self.pruning_mask
 
-    def set_schedule(self, total_epochs: int, decay_rate: str = 'cosine', end_epoch_frac: int = 0.5):
+    def set_schedule(self, total_epochs: int, decay_rate: str = 'cosine', end_epoch_frac: float = 0.5):
+        """
+        Set up the pruning schedule for progressive dimensionality reduction.
+        
+        Creates a schedule that progressively reduces dimensions from initial_dim to target_dim
+        over the specified fraction of training epochs using the chosen decay strategy.
+        
+        Args:
+            total_epochs (int): Total number of training epochs
+            decay_rate (str, optional): Pruning schedule type. Options:
+                                      - 'cosine': Cosine annealing schedule (default)
+                                      - 'linear': Linear reduction schedule
+                                      - 'exp': Exponential decay schedule
+            end_epoch_frac (float, optional): Fraction of total epochs to complete pruning by.
+                                             Defaults to 0.5 (pruning ends halfway through training)
+                                             
+        Example:
+            >>> pruned_mlp.set_schedule(total_epochs=100, decay_rate='cosine', end_epoch_frac=0.7)
+        """
         
         prune_end_epoch = int(end_epoch_frac * total_epochs)
         prune_epochs = prune_end_epoch
@@ -82,7 +176,23 @@ class Pruning_MLP(MLP_SR):
 
         self.pruning_schedule = schedule_dict
 
-    def prune(self, epoch, sample_data):
+    def prune(self, epoch: int, sample_data: torch.Tensor):
+        """
+        Perform pruning for the current epoch based on the pruning schedule.
+        
+        Evaluates the importance of each output dimension by computing the standard deviation
+        of activations across the sample data. Retains the most important dimensions according
+        to the current epoch's target dimensionality.
+        
+        Args:
+            epoch (int): Current training epoch
+            sample_data (torch.Tensor): Sample input data to evaluate dimension importance.
+                                       Typically a subset of validation data.
+                                       
+        Note:
+            This method should be called during each training epoch. If the current epoch
+            is not in the pruning schedule, no pruning is performed.
+        """
 
         if epoch not in self.pruning_schedule:
             return
@@ -104,22 +214,47 @@ class Pruning_MLP(MLP_SR):
             self.current_dim = target_dims
 
     def get_active_dimensions(self):
-        """Get indices of currently active (non-masked) dimensions."""
+        """
+        Get indices of currently active (non-masked) dimensions.
+        
+        Returns:
+            list: List of integer indices for dimensions that are currently active
+                 (not pruned/masked)
+                 
+        Example:
+            >>> active_dims = pruned_mlp.get_active_dimensions()
+            >>> print(f"Active dimensions: {active_dims}")
+            Active dimensions: [5, 12, 18]
+        """
         return torch.where(self.pruning_mask)[0].tolist()
 
     def interpret(self, sample_data, parent_model=None, **pysr_kwargs):
         """
-        Override MLP_SR's interpret to only run on active dimensions.
+        Discover symbolic expressions for active (non-pruned) dimensions only.
+        
+        Overrides MLP_SR's interpret method to focus symbolic regression on dimensions
+        that survived the pruning process, ignoring inactive/masked dimensions.
         
         Args:
-            sample_data: Input data for symbolic regression
-            parent_model (nn.Module, optional): The parent model containing this MLP_SR instance.
+            sample_data (torch.Tensor or DataLoader): Input data for symbolic regression fitting.
+                                                     Can be tensor or DataLoader for batched processing.
+            parent_model (nn.Module, optional): The parent model containing this Pruning_MLP instance.
                                               If provided, will trace intermediate activations to get
                                               the actual inputs/outputs at this layer level.
-            **pysr_kwargs: Additional arguments for PySR
-            
+            **pysr_kwargs: Parameters passed to PySRRegressor. Inherits same defaults as MLP_SR:
+                - binary_operators (list): ["+", "*"]
+                - unary_operators (list): ["inv(x) = 1/x", "sin", "exp"]
+                - niterations (int): 400
+                - output_directory (str): "SR_output/{mlp_name}"
+                - run_id (str): "dim{dim_idx}_{timestamp}"
+                
         Returns:
-            Dictionary mapping active dimension indices to PySR regressors
+            dict: Dictionary mapping active dimension indices to fitted PySRRegressor objects
+            
+        Example:
+            >>> regressors = pruned_mlp.interpret(train_data, niterations=1000)
+            >>> for dim_idx, regressor in regressors.items():
+            ...     print(f"Dimension {dim_idx}: {regressor.get_best()['equation']}")
         """
         active_dims = self.get_active_dimensions()
         if not active_dims:
@@ -216,8 +351,21 @@ class Pruning_MLP(MLP_SR):
 
     def switch_to_equation(self, complexity: list = None):
         """
-        Override MLP_SR's switch_to_equation to handle pruned dimensions correctly.
-        Only active dimensions get symbolic equations, inactive ones remain zero.
+        Switch forward pass to use symbolic equations for active dimensions only.
+        
+        Overrides MLP_SR's switch_to_equation to handle pruned architectures correctly.
+        Active dimensions use their discovered symbolic expressions, while inactive
+        dimensions output zeros as enforced by the pruning mask.
+        
+        Args:
+            complexity (list or int, optional): Specific complexity levels to use.
+                                               If list, maps to active dimensions in order.
+                                               If int, uses same complexity for all active dimensions.
+                                               If None, uses best overall equation for each active dimension.
+                                               
+        Example:
+            >>> pruned_mlp.switch_to_equation()  # Use best equations for all active dimensions
+            >>> pruned_mlp.switch_to_equation(complexity=[5, 7])  # Use complexity 5 for first active dim, 7 for second
         """
         if not hasattr(self, 'pysr_regressor') or not self.pysr_regressor:
             print("❗No equations found. You need to first run .interpret.")
@@ -293,8 +441,22 @@ class Pruning_MLP(MLP_SR):
 
     def forward(self, x):
         """
-        Forward pass with pruning mask applied. 
-        When using equations, inactive dimensions are zero, active ones use equations.
+        Forward pass through the model with pruning mask applied.
+        
+        Automatically switches between MLP and symbolic equations based on current mode.
+        When using MLP mode, applies pruning mask to zero out inactive dimensions.
+        When using symbolic equation mode, evaluates equations only for active dimensions
+        and outputs zeros for inactive dimensions.
+        
+        Args:
+            x (torch.Tensor): Input tensor of shape (batch_size, input_dim)
+            
+        Returns:
+            torch.Tensor: Output tensor of shape (batch_size, initial_dim) with inactive
+                         dimensions masked to zero
+                         
+        Raises:
+            ValueError: If symbolic equations require variables not present in input
         """
         if not hasattr(self, '_using_equation') or not self._using_equation:
             # Use parent's forward method and apply pruning mask
@@ -343,5 +505,5 @@ class Pruning_MLP(MLP_SR):
                         except Exception as e:
                             print(f"⚠️ Error evaluating equation for dimension {dim_idx}: {e}")
             
-            # Apply pruning mask (though active dimensions should already be correct)
+            # Apply pruning mask to ensure inactive dimensions are zero
             return output * self.pruning_mask
