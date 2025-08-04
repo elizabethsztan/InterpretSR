@@ -11,8 +11,7 @@ MLP_SR
    :undoc-members:
    :show-inheritance:
 
-
-toolkit
+Pruning_MLP
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: symtorch.toolkit.Pruning_MLP
