@@ -27,5 +27,6 @@ Contents
    :caption: Demos:
 
    demos/getting_started_demo.ipynb
+   demos/toolkit_demo.ipynb
 
 
