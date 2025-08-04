@@ -10,7 +10,7 @@ pip install torch-symbolic
 
 ## Documentation
 
-Full documentation is available at [ReadTheDocs](https://interpretsr.readthedocs.io/).
+Full documentation is available at [ReadTheDocs](https://symtorch.readthedocs.io/en/latest/).
 
 ## License
 
