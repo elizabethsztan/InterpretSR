@@ -49,20 +49,22 @@ class MLP_SR(nn.Module):
                         nn.Dropout(0.2),
                         nn.Linear(hidden_dim, output_dim)
                     )
-                    self.mlp = MLP_SR(mlp, mlp_name = "Sequential") # Wrap the mlp 
+                    self.mlp = mlp
                     with MLP_SR and provide a label
         >>> model = SimpleModel(input_dim=5, output_dim=1) # Initialise the model
         >>> # Train the model normally
-        >>> trained_model = training_function(model, dataloader, num_steps)
+        >>> model = training_function(model, dataloader, num_steps)
         >>> 
+        >>> # Wrap the mlp with the MLP_SR wrapper
+        >>> model.mlp = MLP_SR(model.mlp, mlp_name = "Sequential") # Wrap the mlp 
         >>> # Apply symbolic regression to the inputs and outputs of the MLP
-        >>> regressor = wrapped_model.interpret(inputs)
+        >>> regressor = model.mlp.interpret(inputs)
         >>> 
         >>> # Switch to using the symbolic equation instead of the MLP in the forwards 
             pass of your deep learning model
-        >>> trained_model.switch_to_equation()
+        >>> model.switch_to_equation()
         >>> # Switch back to using the MLP in the forwards pass
-        >>> trained_model.switch_to_mlp()
+        >>> model.switch_to_mlp()
     """
     
     def __init__(self, mlp: nn.Module, mlp_name: str = None):
