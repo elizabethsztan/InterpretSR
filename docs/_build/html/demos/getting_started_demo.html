@@ -22,6 +22,7 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="SymTorch Toolkit: Pruning" href="toolkit_demo.html" />
     <link rel="prev" title="API Reference" href="../api_reference.html" /> 
 </head>
 
@@ -57,6 +58,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#switch-to-using-the-mlp-in-the-forwards-pass">Switch to Using the MLP in the Forwards Pass</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="toolkit_demo.html">SymTorch Toolkit: Pruning</a></li>
 </ul>
 
         </div>
@@ -94,13 +96,13 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 
-<span class="k">class</span><span class="w"> </span><span class="nc">SimpleModel</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MLP</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Simple model class.</span>
+<span class="sd">    Simple MLP.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dim</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">,</span> <span class="n">hidden_dim</span> <span class="o">=</span> <span class="mi">64</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">SimpleModel</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="n">mlp</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dim</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">MLP</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlp</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
             <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">),</span>
             <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
             <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.2</span><span class="p">),</span>
@@ -112,7 +114,18 @@
             <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.2</span><span class="p">),</span>
             <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_dim</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">)</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mlp</span> <span class="o">=</span> <span class="n">mlp</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mlp</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SimpleModel</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Simple model class.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dim</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">,</span> <span class="n">hidden_dim</span> <span class="o">=</span> <span class="mi">64</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SimpleModel</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlp</span> <span class="o">=</span> <span class="n">MLP</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mlp</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
@@ -124,7 +137,7 @@
 <p>Train the model on some data.</p>
 <div class="math notranslate nohighlight">
 \[
-y = x_0^2 +3 \sin(x_4)-2
+y = x_0^2 +3 \sin(x_4)-4
 \]</div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -206,59 +219,28 @@ y = x_0^2 +3 \sin(x_4)-2
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Epoch [5/20], Avg Loss: 0.086083
-Epoch [10/20], Avg Loss: 0.060582
-Epoch [15/20], Avg Loss: 0.047726
-Epoch [20/20], Avg Loss: 0.037509
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Epoch [5/20], Avg Loss: 0.094613
+Epoch [10/20], Avg Loss: 0.063776
+Epoch [15/20], Avg Loss: 0.048936
+Epoch [20/20], Avg Loss: 0.040046
 </pre></div>
 </div>
 </div>
 </div>
-<p>Now, create a new model with the same architecture as the previous model but wrap the MLP.</p>
+<p>Wrap the mlp layer in the trained model with MLP_SR.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">symtorch.mlp_sr</span><span class="w"> </span><span class="kn">import</span> <span class="n">MLP_SR</span>
-
-<span class="k">class</span><span class="w"> </span><span class="nc">SimpleModel_SR</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Simple model class.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dim</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">,</span> <span class="n">hidden_dim</span> <span class="o">=</span> <span class="mi">64</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">SimpleModel_SR</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="n">mlp</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
-            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">),</span>
-            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
-            <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.2</span><span class="p">),</span>
-            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_dim</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">),</span>
-            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
-            <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.2</span><span class="p">),</span>
-            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_dim</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">),</span>
-            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
-            <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.2</span><span class="p">),</span>
-            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_dim</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">)</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mlp</span> <span class="o">=</span> <span class="n">MLP_SR</span><span class="p">(</span><span class="n">mlp</span><span class="p">,</span> <span class="n">mlp_name</span><span class="o">=</span> <span class="s1">&#39;Sequential&#39;</span><span class="p">)</span> <span class="c1"># Wrap the MLP </span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mlp</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">x</span>
+<span class="n">model</span><span class="o">.</span><span class="n">mlp</span> <span class="o">=</span> <span class="n">MLP_SR</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">mlp</span><span class="p">,</span> <span class="n">mlp_name</span> <span class="o">=</span> <span class="s1">&#39;Sequential&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/Users/liz/PhD/InterpretSR_project/interpretsr_venv/lib/python3.11/site-packages/juliacall/__init__.py:61: UserWarning: torch was imported before juliacall. This may cause a segfault. To avoid this, import juliacall before importing torch. For updates, see https://github.com/pytorch/pytorch/issues/78829.
+  warnings.warn(
+</pre></div>
 </div>
-<p>Load the already trained weights onto the new model.</p>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">symtorch.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_existing_weights_auto</span>
-
-<span class="c1"># Instantiate the new model</span>
-<span class="n">model_SR</span> <span class="o">=</span> <span class="n">SimpleModel_SR</span><span class="p">(</span><span class="n">input_dim</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">output_dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-
-<span class="c1"># Create compatible weights for interpretsr</span>
-<span class="n">weights</span> <span class="o">=</span> <span class="n">load_existing_weights_auto</span><span class="p">(</span><span class="s1">&#39;model_weights.pth&#39;</span><span class="p">,</span> <span class="n">model_SR</span><span class="p">)</span>
-
-<span class="c1"># Load the weights onto the interpretable model</span>
-<span class="n">model_SR</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Detected IPython. Loading juliacall extension. See https://juliapy.github.io/PythonCall.jl/stable/compat/#IPython
 </pre></div>
 </div>
 </div>
@@ -271,7 +253,7 @@ To see all the possible parameters, please see the <code class="docutils literal
 <p>In this example, we turn verbosity off because we are in a Jupyter notebook. For best performance, run in IPython, as you can terminate the SR any time.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model_SR</span><span class="o">.</span><span class="n">mlp</span><span class="o">.</span><span class="n">interpret</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">X_train</span><span class="p">),</span> 
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">mlp</span><span class="o">.</span><span class="n">interpret</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">X_train</span><span class="p">),</span> 
                        <span class="n">niterations</span> <span class="o">=</span> <span class="mi">500</span><span class="p">,</span> <span class="c1"># Should set to higher</span>
                        <span class="n">verbosity</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> 
                        <span class="n">complexity_of_operators</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;sin&quot;</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;exp&quot;</span><span class="p">:</span><span class="mi">3</span><span class="p">},</span> 
@@ -281,1575 +263,108 @@ To see all the possible parameters, please see the <code class="docutils literal
 </div>
 </div>
 <div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>🛠️ Running SR on output dimension 0 of 0
+</pre></div>
+</div>
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/Users/liz/PhD/InterpretSR_project/interpretsr_venv/lib/python3.11/site-packages/pysr/sr.py:2811: UserWarning: Note: it looks like you are running in Jupyter. The progress bar will be turned off.
   warnings.warn(
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>❤️ SR on Sequential complete.
-💡Best equation found to be (sin(x4) * 2.88715) + ((x0 * sin(x0)) + -3.92104).
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>💡Best equation for output 0 found to be ((x0 * x0) + -3.918567) + (sin(x4) * 2.8742185).
+❤️ SR on Sequential complete.
 </pre></div>
 </div>
-<div class="output text_html"><style>#sk-container-id-1 {
-  /* Definition of color scheme common for light and dark mode */
-  --sklearn-color-text: #000;
-  --sklearn-color-text-muted: #666;
-  --sklearn-color-line: gray;
-  /* Definition of color scheme for unfitted estimators */
-  --sklearn-color-unfitted-level-0: #fff5e6;
-  --sklearn-color-unfitted-level-1: #f6e4d2;
-  --sklearn-color-unfitted-level-2: #ffe0b3;
-  --sklearn-color-unfitted-level-3: chocolate;
-  /* Definition of color scheme for fitted estimators */
-  --sklearn-color-fitted-level-0: #f0f8ff;
-  --sklearn-color-fitted-level-1: #d4ebff;
-  --sklearn-color-fitted-level-2: #b3dbfd;
-  --sklearn-color-fitted-level-3: cornflowerblue;
-
-  /* Specific color for light theme */
-  --sklearn-color-text-on-default-background: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, black)));
-  --sklearn-color-background: var(--sg-background-color, var(--theme-background, var(--jp-layout-color0, white)));
-  --sklearn-color-border-box: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, black)));
-  --sklearn-color-icon: #696969;
-
-  @media (prefers-color-scheme: dark) {
-    /* Redefinition of color scheme for dark theme */
-    --sklearn-color-text-on-default-background: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, white)));
-    --sklearn-color-background: var(--sg-background-color, var(--theme-background, var(--jp-layout-color0, #111)));
-    --sklearn-color-border-box: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, white)));
-    --sklearn-color-icon: #878787;
-  }
-}
-
-#sk-container-id-1 {
-  color: var(--sklearn-color-text);
-}
-
-#sk-container-id-1 pre {
-  padding: 0;
-}
-
-#sk-container-id-1 input.sk-hidden--visually {
-  border: 0;
-  clip: rect(1px 1px 1px 1px);
-  clip: rect(1px, 1px, 1px, 1px);
-  height: 1px;
-  margin: -1px;
-  overflow: hidden;
-  padding: 0;
-  position: absolute;
-  width: 1px;
-}
-
-#sk-container-id-1 div.sk-dashed-wrapped {
-  border: 1px dashed var(--sklearn-color-line);
-  margin: 0 0.4em 0.5em 0.4em;
-  box-sizing: border-box;
-  padding-bottom: 0.4em;
-  background-color: var(--sklearn-color-background);
-}
-
-#sk-container-id-1 div.sk-container {
-  /* jupyter's `normalize.less` sets `[hidden] { display: none; }`
-     but bootstrap.min.css set `[hidden] { display: none !important; }`
-     so we also need the `!important` here to be able to override the
-     default hidden behavior on the sphinx rendered scikit-learn.org.
-     See: https://github.com/scikit-learn/scikit-learn/issues/21755 */
-  display: inline-block !important;
-  position: relative;
-}
-
-#sk-container-id-1 div.sk-text-repr-fallback {
-  display: none;
-}
-
-div.sk-parallel-item,
-div.sk-serial,
-div.sk-item {
-  /* draw centered vertical line to link estimators */
-  background-image: linear-gradient(var(--sklearn-color-text-on-default-background), var(--sklearn-color-text-on-default-background));
-  background-size: 2px 100%;
-  background-repeat: no-repeat;
-  background-position: center center;
-}
-
-/* Parallel-specific style estimator block */
-
-#sk-container-id-1 div.sk-parallel-item::after {
-  content: "";
-  width: 100%;
-  border-bottom: 2px solid var(--sklearn-color-text-on-default-background);
-  flex-grow: 1;
-}
-
-#sk-container-id-1 div.sk-parallel {
-  display: flex;
-  align-items: stretch;
-  justify-content: center;
-  background-color: var(--sklearn-color-background);
-  position: relative;
-}
-
-#sk-container-id-1 div.sk-parallel-item {
-  display: flex;
-  flex-direction: column;
-}
-
-#sk-container-id-1 div.sk-parallel-item:first-child::after {
-  align-self: flex-end;
-  width: 50%;
-}
-
-#sk-container-id-1 div.sk-parallel-item:last-child::after {
-  align-self: flex-start;
-  width: 50%;
-}
-
-#sk-container-id-1 div.sk-parallel-item:only-child::after {
-  width: 0;
-}
-
-/* Serial-specific style estimator block */
-
-#sk-container-id-1 div.sk-serial {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background-color: var(--sklearn-color-background);
-  padding-right: 1em;
-  padding-left: 1em;
-}
-
-
-/* Toggleable style: style used for estimator/Pipeline/ColumnTransformer box that is
-clickable and can be expanded/collapsed.
-- Pipeline and ColumnTransformer use this feature and define the default style
-- Estimators will overwrite some part of the style using the `sk-estimator` class
-*/
-
-/* Pipeline and ColumnTransformer style (default) */
-
-#sk-container-id-1 div.sk-toggleable {
-  /* Default theme specific background. It is overwritten whether we have a
-  specific estimator or a Pipeline/ColumnTransformer */
-  background-color: var(--sklearn-color-background);
-}
-
-/* Toggleable label */
-#sk-container-id-1 label.sk-toggleable__label {
-  cursor: pointer;
-  display: flex;
-  width: 100%;
-  margin-bottom: 0;
-  padding: 0.5em;
-  box-sizing: border-box;
-  text-align: center;
-  align-items: start;
-  justify-content: space-between;
-  gap: 0.5em;
-}
-
-#sk-container-id-1 label.sk-toggleable__label .caption {
-  font-size: 0.6rem;
-  font-weight: lighter;
-  color: var(--sklearn-color-text-muted);
-}
-
-#sk-container-id-1 label.sk-toggleable__label-arrow:before {
-  /* Arrow on the left of the label */
-  content: "▸";
-  float: left;
-  margin-right: 0.25em;
-  color: var(--sklearn-color-icon);
-}
-
-#sk-container-id-1 label.sk-toggleable__label-arrow:hover:before {
-  color: var(--sklearn-color-text);
-}
-
-/* Toggleable content - dropdown */
-
-#sk-container-id-1 div.sk-toggleable__content {
-  display: none;
-  text-align: left;
-  /* unfitted */
-  background-color: var(--sklearn-color-unfitted-level-0);
-}
-
-#sk-container-id-1 div.sk-toggleable__content.fitted {
-  /* fitted */
-  background-color: var(--sklearn-color-fitted-level-0);
-}
-
-#sk-container-id-1 div.sk-toggleable__content pre {
-  margin: 0.2em;
-  border-radius: 0.25em;
-  color: var(--sklearn-color-text);
-  /* unfitted */
-  background-color: var(--sklearn-color-unfitted-level-0);
-}
-
-#sk-container-id-1 div.sk-toggleable__content.fitted pre {
-  /* unfitted */
-  background-color: var(--sklearn-color-fitted-level-0);
-}
-
-#sk-container-id-1 input.sk-toggleable__control:checked~div.sk-toggleable__content {
-  /* Expand drop-down */
-  display: block;
-  width: 100%;
-  overflow: visible;
-}
-
-#sk-container-id-1 input.sk-toggleable__control:checked~label.sk-toggleable__label-arrow:before {
-  content: "▾";
-}
-
-/* Pipeline/ColumnTransformer-specific style */
-
-#sk-container-id-1 div.sk-label input.sk-toggleable__control:checked~label.sk-toggleable__label {
-  color: var(--sklearn-color-text);
-  background-color: var(--sklearn-color-unfitted-level-2);
-}
-
-#sk-container-id-1 div.sk-label.fitted input.sk-toggleable__control:checked~label.sk-toggleable__label {
-  background-color: var(--sklearn-color-fitted-level-2);
-}
-
-/* Estimator-specific style */
-
-/* Colorize estimator box */
-#sk-container-id-1 div.sk-estimator input.sk-toggleable__control:checked~label.sk-toggleable__label {
-  /* unfitted */
-  background-color: var(--sklearn-color-unfitted-level-2);
-}
-
-#sk-container-id-1 div.sk-estimator.fitted input.sk-toggleable__control:checked~label.sk-toggleable__label {
-  /* fitted */
-  background-color: var(--sklearn-color-fitted-level-2);
-}
-
-#sk-container-id-1 div.sk-label label.sk-toggleable__label,
-#sk-container-id-1 div.sk-label label {
-  /* The background is the default theme color */
-  color: var(--sklearn-color-text-on-default-background);
-}
-
-/* On hover, darken the color of the background */
-#sk-container-id-1 div.sk-label:hover label.sk-toggleable__label {
-  color: var(--sklearn-color-text);
-  background-color: var(--sklearn-color-unfitted-level-2);
-}
-
-/* Label box, darken color on hover, fitted */
-#sk-container-id-1 div.sk-label.fitted:hover label.sk-toggleable__label.fitted {
-  color: var(--sklearn-color-text);
-  background-color: var(--sklearn-color-fitted-level-2);
-}
-
-/* Estimator label */
-
-#sk-container-id-1 div.sk-label label {
-  font-family: monospace;
-  font-weight: bold;
-  display: inline-block;
-  line-height: 1.2em;
-}
-
-#sk-container-id-1 div.sk-label-container {
-  text-align: center;
-}
-
-/* Estimator-specific */
-#sk-container-id-1 div.sk-estimator {
-  font-family: monospace;
-  border: 1px dotted var(--sklearn-color-border-box);
-  border-radius: 0.25em;
-  box-sizing: border-box;
-  margin-bottom: 0.5em;
-  /* unfitted */
-  background-color: var(--sklearn-color-unfitted-level-0);
-}
-
-#sk-container-id-1 div.sk-estimator.fitted {
-  /* fitted */
-  background-color: var(--sklearn-color-fitted-level-0);
-}
-
-/* on hover */
-#sk-container-id-1 div.sk-estimator:hover {
-  /* unfitted */
-  background-color: var(--sklearn-color-unfitted-level-2);
-}
-
-#sk-container-id-1 div.sk-estimator.fitted:hover {
-  /* fitted */
-  background-color: var(--sklearn-color-fitted-level-2);
-}
-
-/* Specification for estimator info (e.g. "i" and "?") */
-
-/* Common style for "i" and "?" */
-
-.sk-estimator-doc-link,
-a:link.sk-estimator-doc-link,
-a:visited.sk-estimator-doc-link {
-  float: right;
-  font-size: smaller;
-  line-height: 1em;
-  font-family: monospace;
-  background-color: var(--sklearn-color-background);
-  border-radius: 1em;
-  height: 1em;
-  width: 1em;
-  text-decoration: none !important;
-  margin-left: 0.5em;
-  text-align: center;
-  /* unfitted */
-  border: var(--sklearn-color-unfitted-level-1) 1pt solid;
-  color: var(--sklearn-color-unfitted-level-1);
-}
-
-.sk-estimator-doc-link.fitted,
-a:link.sk-estimator-doc-link.fitted,
-a:visited.sk-estimator-doc-link.fitted {
-  /* fitted */
-  border: var(--sklearn-color-fitted-level-1) 1pt solid;
-  color: var(--sklearn-color-fitted-level-1);
-}
-
-/* On hover */
-div.sk-estimator:hover .sk-estimator-doc-link:hover,
-.sk-estimator-doc-link:hover,
-div.sk-label-container:hover .sk-estimator-doc-link:hover,
-.sk-estimator-doc-link:hover {
-  /* unfitted */
-  background-color: var(--sklearn-color-unfitted-level-3);
-  color: var(--sklearn-color-background);
-  text-decoration: none;
-}
-
-div.sk-estimator.fitted:hover .sk-estimator-doc-link.fitted:hover,
-.sk-estimator-doc-link.fitted:hover,
-div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
-.sk-estimator-doc-link.fitted:hover {
-  /* fitted */
-  background-color: var(--sklearn-color-fitted-level-3);
-  color: var(--sklearn-color-background);
-  text-decoration: none;
-}
-
-/* Span, style for the box shown on hovering the info icon */
-.sk-estimator-doc-link span {
-  display: none;
-  z-index: 9999;
-  position: relative;
-  font-weight: normal;
-  right: .2ex;
-  padding: .5ex;
-  margin: .5ex;
-  width: min-content;
-  min-width: 20ex;
-  max-width: 50ex;
-  color: var(--sklearn-color-text);
-  box-shadow: 2pt 2pt 4pt #999;
-  /* unfitted */
-  background: var(--sklearn-color-unfitted-level-0);
-  border: .5pt solid var(--sklearn-color-unfitted-level-3);
-}
-
-.sk-estimator-doc-link.fitted span {
-  /* fitted */
-  background: var(--sklearn-color-fitted-level-0);
-  border: var(--sklearn-color-fitted-level-3);
-}
-
-.sk-estimator-doc-link:hover span {
-  display: block;
-}
-
-/* "?"-specific style due to the `<a>` HTML tag */
-
-#sk-container-id-1 a.estimator_doc_link {
-  float: right;
-  font-size: 1rem;
-  line-height: 1em;
-  font-family: monospace;
-  background-color: var(--sklearn-color-background);
-  border-radius: 1rem;
-  height: 1rem;
-  width: 1rem;
-  text-decoration: none;
-  /* unfitted */
-  color: var(--sklearn-color-unfitted-level-1);
-  border: var(--sklearn-color-unfitted-level-1) 1pt solid;
-}
-
-#sk-container-id-1 a.estimator_doc_link.fitted {
-  /* fitted */
-  border: var(--sklearn-color-fitted-level-1) 1pt solid;
-  color: var(--sklearn-color-fitted-level-1);
-}
-
-/* On hover */
-#sk-container-id-1 a.estimator_doc_link:hover {
-  /* unfitted */
-  background-color: var(--sklearn-color-unfitted-level-3);
-  color: var(--sklearn-color-background);
-  text-decoration: none;
-}
-
-#sk-container-id-1 a.estimator_doc_link.fitted:hover {
-  /* fitted */
-  background-color: var(--sklearn-color-fitted-level-3);
-}
-
-.estimator-table summary {
-    padding: .5rem;
-    font-family: monospace;
-    cursor: pointer;
-}
-
-.estimator-table details[open] {
-    padding-left: 0.1rem;
-    padding-right: 0.1rem;
-    padding-bottom: 0.3rem;
-}
-
-.estimator-table .parameters-table {
-    margin-left: auto !important;
-    margin-right: auto !important;
-}
-
-.estimator-table .parameters-table tr:nth-child(odd) {
-    background-color: #fff;
-}
-
-.estimator-table .parameters-table tr:nth-child(even) {
-    background-color: #f6f6f6;
-}
-
-.estimator-table .parameters-table tr:hover {
-    background-color: #e0e0e0;
-}
-
-.estimator-table table td {
-    border: 1px solid rgba(106, 105, 104, 0.232);
-}
-
-.user-set td {
-    color:rgb(255, 94, 0);
-    text-align: left;
-}
-
-.user-set td.value pre {
-    color:rgb(255, 94, 0) !important;
-    background-color: transparent !important;
-}
-
-.default td {
-    color: black;
-    text-align: left;
-}
-
-.user-set td i,
-.default td i {
-    color: black;
-}
-
-.copy-paste-icon {
-    background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0NDggNTEyIj48IS0tIUZvbnQgQXdlc29tZSBGcmVlIDYuNy4yIGJ5IEBmb250YXdlc29tZSAtIGh0dHBzOi8vZm9udGF3ZXNvbWUuY29tIExpY2Vuc2UgLSBodHRwczovL2ZvbnRhd2Vzb21lLmNvbS9saWNlbnNlL2ZyZWUgQ29weXJpZ2h0IDIwMjUgRm9udGljb25zLCBJbmMuLS0+PHBhdGggZD0iTTIwOCAwTDMzMi4xIDBjMTIuNyAwIDI0LjkgNS4xIDMzLjkgMTQuMWw2Ny45IDY3LjljOSA5IDE0LjEgMjEuMiAxNC4xIDMzLjlMNDQ4IDMzNmMwIDI2LjUtMjEuNSA0OC00OCA0OGwtMTkyIDBjLTI2LjUgMC00OC0yMS41LTQ4LTQ4bDAtMjg4YzAtMjYuNSAyMS41LTQ4IDQ4LTQ4ek00OCAxMjhsODAgMCAwIDY0LTY0IDAgMCAyNTYgMTkyIDAgMC0zMiA2NCAwIDAgNDhjMCAyNi41LTIxLjUgNDgtNDggNDhMNDggNTEyYy0yNi41IDAtNDgtMjEuNS00OC00OEwwIDE3NmMwLTI2LjUgMjEuNS00OCA0OC00OHoiLz48L3N2Zz4=);
-    background-repeat: no-repeat;
-    background-size: 14px 14px;
-    background-position: 0;
-    display: inline-block;
-    width: 14px;
-    height: 14px;
-    cursor: pointer;
-}
-</style><body><div id="sk-container-id-1" class="sk-top-container"><div class="sk-text-repr-fallback"><pre>PySRRegressor.equations_ = [
-	    pick         score                                           equation  \
-	0         0.000000e+00                                                 x4   
-	1         2.627671e+00                                         -2.2881544   
-	2         6.892099e-08                                   inv(-0.43701676)   
-	3         8.284774e-01                                    x4 + -2.7892244   
-	4         5.034688e-01                              x4 + (x4 + -3.290303)   
-	5         2.193818e-01                       (x4 * 2.4685423) + -3.525075   
-	6         9.753588e-01                      (x0 + (x4 + x4)) + -3.7918618   
-	7         1.042055e+00                  x0 + ((x4 * 2.467513) + -4.02612)   
-	8         1.908643e-01         ((x0 * x0) + (x4 * 2.4663157)) + -3.859028   
-	9         1.425433e-01          (sin(x4) * 2.8875916) + (x0 + -4.1199875)   
-	10        3.761760e-01     ((sin(x4) * 2.88608) + -3.9527998) + (x0 * x0)   
-	11  &gt;&gt;&gt;&gt;  2.149560e-01  (sin(x4) * 2.88715) + ((x0 * sin(x0)) + -3.92104)   
-	12        3.353973e-02  (sin(x4 * 1.1155162) * 2.6896117) + (((x0 * 0....   
-	13        1.273127e-06  (sin(sin(x4) * 0.6421045) * 4.706769) + ((x0 *...   
-	14        2.539007e-02  ((sin(x4) * 2.7789357) + -3.8488097) + sin((x0...   
-	15        6.503654e-02  (sin((x0 * x0) * sin(x4 + 1.0346645)) + -3.912...   
-	16        2.329675e-02  (sin(x4) * 2.8874922) + (sin((x0 * sin((x4 * x...   
-	17        2.470213e-02  (((x0 * x0) * sin(sin(exp(x0 * x4)) * 1.194401...   
-	
-	        loss  complexity  
-	0   8.033255           1  
-	1   0.580375           2  
-	2   0.580375           3  
-	3   0.253458           4  
-	4   0.092597           6  
-	5   0.074357           7  
-	6   0.028037           8  
-	7   0.009889           9  
-	8   0.006751          11  
-	9   0.005854          12  
-	10  0.002759          14  
-	11  0.001448          17  
-	12  0.001309          20  
-	13  0.001309          23  
-	14  0.001276          24  
-	15  0.001196          25  
-	16  0.001141          27  
-	17  0.001060          30  
-]</pre><b>In a Jupyter environment, please rerun this cell to show the HTML representation or trust the notebook. <br />On GitHub, the HTML representation is unable to render, please try loading this page with nbviewer.org.</b></div><div class="sk-container" hidden><div class="sk-item"><div class="sk-estimator fitted sk-toggleable"><input class="sk-toggleable__control sk-hidden--visually" id="sk-estimator-id-1" type="checkbox" checked><label for="sk-estimator-id-1" class="sk-toggleable__label fitted sk-toggleable__label-arrow"><div><div>PySRRegressor</div></div><div><span class="sk-estimator-doc-link fitted">i<span>Fitted</span></span></div></label><div class="sk-toggleable__content fitted" data-param-prefix="">
-        <div class="estimator-table">
-            <details>
-                <summary>Parameters</summary>
-                <table class="parameters-table">
-                  <tbody>
-                    
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('model_selection',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">model_selection&nbsp;</td>
-            <td class="value">&#x27;best&#x27;</td>
-        </tr>
-    
-
-        <tr class="user-set">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('binary_operators',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">binary_operators&nbsp;</td>
-            <td class="value">[&#x27;+&#x27;, &#x27;*&#x27;]</td>
-        </tr>
-    
-
-        <tr class="user-set">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('unary_operators',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">unary_operators&nbsp;</td>
-            <td class="value">[&#x27;inv(x) = 1/x&#x27;, &#x27;sin&#x27;, ...]</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('expression_spec',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">expression_spec&nbsp;</td>
-            <td class="value">None</td>
-        </tr>
-    
-
-        <tr class="user-set">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('niterations',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">niterations&nbsp;</td>
-            <td class="value">500</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('populations',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">populations&nbsp;</td>
-            <td class="value">31</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('population_size',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">population_size&nbsp;</td>
-            <td class="value">27</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('max_evals',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">max_evals&nbsp;</td>
-            <td class="value">None</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('maxsize',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">maxsize&nbsp;</td>
-            <td class="value">30</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('maxdepth',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">maxdepth&nbsp;</td>
-            <td class="value">None</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('warmup_maxsize_by',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">warmup_maxsize_by&nbsp;</td>
-            <td class="value">None</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('timeout_in_seconds',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">timeout_in_seconds&nbsp;</td>
-            <td class="value">None</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('constraints',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">constraints&nbsp;</td>
-            <td class="value">None</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('nested_constraints',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">nested_constraints&nbsp;</td>
-            <td class="value">None</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('elementwise_loss',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">elementwise_loss&nbsp;</td>
-            <td class="value">None</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('loss_function',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">loss_function&nbsp;</td>
-            <td class="value">None</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('loss_function_expression',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">loss_function_expression&nbsp;</td>
-            <td class="value">None</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('loss_scale',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">loss_scale&nbsp;</td>
-            <td class="value">&#x27;log&#x27;</td>
-        </tr>
-    
-
-        <tr class="user-set">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('complexity_of_operators',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">complexity_of_operators&nbsp;</td>
-            <td class="value">{&#x27;exp&#x27;: 3, &#x27;sin&#x27;: 3}</td>
-        </tr>
-    
-
-        <tr class="user-set">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('complexity_of_constants',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">complexity_of_constants&nbsp;</td>
-            <td class="value">2</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('complexity_of_variables',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">complexity_of_variables&nbsp;</td>
-            <td class="value">None</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('complexity_mapping',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">complexity_mapping&nbsp;</td>
-            <td class="value">None</td>
-        </tr>
-    
-
-        <tr class="user-set">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('parsimony',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">parsimony&nbsp;</td>
-            <td class="value">0.1</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('dimensional_constraint_penalty',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">dimensional_constraint_penalty&nbsp;</td>
-            <td class="value">None</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('dimensionless_constants_only',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">dimensionless_constants_only&nbsp;</td>
-            <td class="value">False</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('use_frequency',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">use_frequency&nbsp;</td>
-            <td class="value">True</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('use_frequency_in_tournament',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">use_frequency_in_tournament&nbsp;</td>
-            <td class="value">True</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('adaptive_parsimony_scaling',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">adaptive_parsimony_scaling&nbsp;</td>
-            <td class="value">1040.0</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('alpha',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">alpha&nbsp;</td>
-            <td class="value">3.17</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('annealing',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">annealing&nbsp;</td>
-            <td class="value">False</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('early_stop_condition',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">early_stop_condition&nbsp;</td>
-            <td class="value">None</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('ncycles_per_iteration',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">ncycles_per_iteration&nbsp;</td>
-            <td class="value">380</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('fraction_replaced',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">fraction_replaced&nbsp;</td>
-            <td class="value">0.00036</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('fraction_replaced_hof',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">fraction_replaced_hof&nbsp;</td>
-            <td class="value">0.0614</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('weight_add_node',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">weight_add_node&nbsp;</td>
-            <td class="value">2.47</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('weight_insert_node',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">weight_insert_node&nbsp;</td>
-            <td class="value">0.0112</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('weight_delete_node',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">weight_delete_node&nbsp;</td>
-            <td class="value">0.87</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('weight_do_nothing',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">weight_do_nothing&nbsp;</td>
-            <td class="value">0.273</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('weight_mutate_constant',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">weight_mutate_constant&nbsp;</td>
-            <td class="value">0.0346</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('weight_mutate_operator',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">weight_mutate_operator&nbsp;</td>
-            <td class="value">0.293</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('weight_swap_operands',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">weight_swap_operands&nbsp;</td>
-            <td class="value">0.198</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('weight_rotate_tree',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">weight_rotate_tree&nbsp;</td>
-            <td class="value">4.26</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('weight_randomize',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">weight_randomize&nbsp;</td>
-            <td class="value">0.000502</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('weight_simplify',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">weight_simplify&nbsp;</td>
-            <td class="value">0.00209</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('weight_optimize',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">weight_optimize&nbsp;</td>
-            <td class="value">0.0</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('crossover_probability',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">crossover_probability&nbsp;</td>
-            <td class="value">0.0259</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('skip_mutation_failures',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">skip_mutation_failures&nbsp;</td>
-            <td class="value">True</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('migration',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">migration&nbsp;</td>
-            <td class="value">True</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('hof_migration',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">hof_migration&nbsp;</td>
-            <td class="value">True</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('topn',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">topn&nbsp;</td>
-            <td class="value">12</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('should_simplify',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">should_simplify&nbsp;</td>
-            <td class="value">True</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('should_optimize_constants',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">should_optimize_constants&nbsp;</td>
-            <td class="value">True</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('optimizer_algorithm',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">optimizer_algorithm&nbsp;</td>
-            <td class="value">&#x27;BFGS&#x27;</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('optimizer_nrestarts',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">optimizer_nrestarts&nbsp;</td>
-            <td class="value">2</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('optimizer_f_calls_limit',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">optimizer_f_calls_limit&nbsp;</td>
-            <td class="value">None</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('optimize_probability',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">optimize_probability&nbsp;</td>
-            <td class="value">0.14</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('optimizer_iterations',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">optimizer_iterations&nbsp;</td>
-            <td class="value">8</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('perturbation_factor',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">perturbation_factor&nbsp;</td>
-            <td class="value">0.129</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('probability_negate_constant',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">probability_negate_constant&nbsp;</td>
-            <td class="value">0.00743</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('tournament_selection_n',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">tournament_selection_n&nbsp;</td>
-            <td class="value">15</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('tournament_selection_p',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">tournament_selection_p&nbsp;</td>
-            <td class="value">0.982</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('parallelism',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">parallelism&nbsp;</td>
-            <td class="value">None</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('procs',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">procs&nbsp;</td>
-            <td class="value">None</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('cluster_manager',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">cluster_manager&nbsp;</td>
-            <td class="value">None</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('heap_size_hint_in_bytes',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">heap_size_hint_in_bytes&nbsp;</td>
-            <td class="value">None</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('batching',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">batching&nbsp;</td>
-            <td class="value">False</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('batch_size',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">batch_size&nbsp;</td>
-            <td class="value">50</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('fast_cycle',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">fast_cycle&nbsp;</td>
-            <td class="value">False</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('turbo',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">turbo&nbsp;</td>
-            <td class="value">False</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('bumper',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">bumper&nbsp;</td>
-            <td class="value">False</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('precision',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">precision&nbsp;</td>
-            <td class="value">32</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('autodiff_backend',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">autodiff_backend&nbsp;</td>
-            <td class="value">None</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('random_state',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">random_state&nbsp;</td>
-            <td class="value">None</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('deterministic',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">deterministic&nbsp;</td>
-            <td class="value">False</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('warm_start',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">warm_start&nbsp;</td>
-            <td class="value">False</td>
-        </tr>
-    
-
-        <tr class="user-set">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('verbosity',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">verbosity&nbsp;</td>
-            <td class="value">0</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('update_verbosity',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">update_verbosity&nbsp;</td>
-            <td class="value">None</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('print_precision',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">print_precision&nbsp;</td>
-            <td class="value">5</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('progress',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">progress&nbsp;</td>
-            <td class="value">True</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('logger_spec',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">logger_spec&nbsp;</td>
-            <td class="value">None</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('input_stream',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">input_stream&nbsp;</td>
-            <td class="value">&#x27;stdin&#x27;</td>
-        </tr>
-    
-
-        <tr class="user-set">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('run_id',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">run_id&nbsp;</td>
-            <td class="value">&#x27;1753874569&#x27;</td>
-        </tr>
-    
-
-        <tr class="user-set">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('output_directory',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">output_directory&nbsp;</td>
-            <td class="value">&#x27;SR_output/Sequential&#x27;</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('temp_equation_file',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">temp_equation_file&nbsp;</td>
-            <td class="value">False</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('tempdir',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">tempdir&nbsp;</td>
-            <td class="value">None</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('delete_tempfiles',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">delete_tempfiles&nbsp;</td>
-            <td class="value">True</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('update',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">update&nbsp;</td>
-            <td class="value">False</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('output_jax_format',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">output_jax_format&nbsp;</td>
-            <td class="value">False</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('output_torch_format',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">output_torch_format&nbsp;</td>
-            <td class="value">False</td>
-        </tr>
-    
-
-        <tr class="user-set">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('extra_sympy_mappings',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">extra_sympy_mappings&nbsp;</td>
-            <td class="value">{&#x27;inv&#x27;: &lt;function MLP...t 0x355924f40&gt;}</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('extra_torch_mappings',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">extra_torch_mappings&nbsp;</td>
-            <td class="value">None</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('extra_jax_mappings',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">extra_jax_mappings&nbsp;</td>
-            <td class="value">None</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('denoise',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">denoise&nbsp;</td>
-            <td class="value">False</td>
-        </tr>
-    
-
-        <tr class="default">
-            <td><i class="copy-paste-icon"
-                 onclick="copyToClipboard('select_k_features',
-                          this.parentElement.nextElementSibling)"
-            ></i></td>
-            <td class="param">select_k_features&nbsp;</td>
-            <td class="value">None</td>
-        </tr>
-    
-                  </tbody>
-                </table>
-            </details>
-        </div>
-    </div></div></div></div></div><script>function copyToClipboard(text, element) {
-    // Get the parameter prefix from the closest toggleable content
-    const toggleableContent = element.closest('.sk-toggleable__content');
-    const paramPrefix = toggleableContent ? toggleableContent.dataset.paramPrefix : '';
-    const fullParamName = paramPrefix ? `${paramPrefix}${text}` : text;
-
-    const originalStyle = element.style;
-    const computedStyle = window.getComputedStyle(element);
-    const originalWidth = computedStyle.width;
-    const originalHTML = element.innerHTML.replace('Copied!', '');
-
-    navigator.clipboard.writeText(fullParamName)
-        .then(() => {
-            element.style.width = originalWidth;
-            element.style.color = 'green';
-            element.innerHTML = "Copied!";
-
-            setTimeout(() => {
-                element.innerHTML = originalHTML;
-                element.style = originalStyle;
-            }, 2000);
-        })
-        .catch(err => {
-            console.error('Failed to copy:', err);
-            element.style.color = 'red';
-            element.innerHTML = "Failed!";
-            setTimeout(() => {
-                element.innerHTML = originalHTML;
-                element.style = originalStyle;
-            }, 2000);
-        });
-    return false;
-}
-
-document.querySelectorAll('.fa-regular.fa-copy').forEach(function(element) {
-    const toggleableContent = element.closest('.sk-toggleable__content');
-    const paramPrefix = toggleableContent ? toggleableContent.dataset.paramPrefix : '';
-    const paramName = element.parentElement.nextElementSibling.textContent.trim();
-    const fullParamName = paramPrefix ? `${paramPrefix}${paramName}` : paramName;
-
-    element.setAttribute('title', fullParamName);
-});
-</script></body></div></div>
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>{0: PySRRegressor.equations_ = [
+ 	    pick         score                                           equation  \
+ 	0         0.000000e+00                                                 x4   
+ 	1         2.596927e+00                                         -2.2726457   
+ 	2         4.073414e-01                                    x4 + -2.7684813   
+ 	3         4.770055e-01                             (x4 + x4) + -3.2644153   
+ 	4         1.900821e-01                      (x4 + -1.4215928) * 2.4550738   
+ 	5         1.122596e+00                       ((x0 + x4) + -3.766932) + x4   
+ 	6         1.062448e+00                (x4 * 2.459092) + (x0 + -3.9945967)   
+ 	7         2.566310e-01        ((x4 * 2.4604707) + (x0 * x0)) + -3.8280373   
+ 	8         4.459062e-08  ((x0 * x0) + (x4 + -3.828038)) + (x4 * 1.4604728)   
+ 	9   &gt;&gt;&gt;&gt;  1.072845e+00    ((x0 * x0) + -3.918567) + (sin(x4) * 2.8742185)   
+ 	10        5.908252e-02  ((x0 * (x0 * 0.9405975)) + -3.8984792) + (sin(...   
+ 	11        1.201339e-02  ((sin(x4) * 2.8734725) + -3.9172218) + (((x0 *...   
+ 	12        2.686410e-03  ((((x2 * 0.051761005) + x0) * x0) * 0.9188136)...   
+ 	13        2.204982e-02  ((sin(x4) * 2.9311705) + (x0 * (x0 + (x4 * ((x...   
+ 	14        9.261696e-02  (sin(x4) * 2.848834) + ((x0 * (x0 * sin((x4 + ...   
+ 	15        5.744458e-03  (x0 * ((x0 + -0.017147552) * sin((x0 + x4) + 0...   
+ 	16        6.804990e-03  (sin(x4) * 2.9278073) + ((((((x4 * (x4 * x4)) ...   
+ 	
+ 	        loss  complexity  
+ 	0   7.926341           1  
+ 	1   0.590529           2  
+ 	2   0.261474           4  
+ 	3   0.100718           6  
+ 	4   0.083283           7  
+ 	5   0.027103           8  
+ 	6   0.009367           9  
+ 	7   0.005607          11  
+ 	8   0.005607          13  
+ 	9   0.001918          14  
+ 	10  0.001606          17  
+ 	11  0.001549          20  
+ 	12  0.001541          22  
+ 	13  0.001507          23  
+ 	14  0.001374          24  
+ 	15  0.001351          27  
+ 	16  0.001332          29  
+ ]}
+</pre></div>
+</div>
+</div>
 </div>
 <p>See the full Pareto front of equations. The best equation is chosen as a balance of accuracy and complexity.<br />
 Outputs from <em>PySR</em> are saved in <code class="docutils literal notranslate"><span class="pre">SR_output/MLP_name</span></code>.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">model_SR</span><span class="o">.</span><span class="n">mlp</span><span class="o">.</span><span class="n">pysr_regressor</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">mlp</span><span class="o">.</span><span class="n">pysr_regressor</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>PySRRegressor.equations_ = [
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>{0: PySRRegressor.equations_ = [
 	    pick         score                                           equation  \
 	0         0.000000e+00                                                 x4   
-	1         2.627671e+00                                         -2.2881544   
-	2         6.892099e-08                                   inv(-0.43701676)   
-	3         8.284774e-01                                    x4 + -2.7892244   
-	4         5.034688e-01                              x4 + (x4 + -3.290303)   
-	5         2.193818e-01                       (x4 * 2.4685423) + -3.525075   
-	6         9.753588e-01                      (x0 + (x4 + x4)) + -3.7918618   
-	7         1.042055e+00                  x0 + ((x4 * 2.467513) + -4.02612)   
-	8         1.908643e-01         ((x0 * x0) + (x4 * 2.4663157)) + -3.859028   
-	9         1.425433e-01          (sin(x4) * 2.8875916) + (x0 + -4.1199875)   
-	10        3.761760e-01     ((sin(x4) * 2.88608) + -3.9527998) + (x0 * x0)   
-	11  &gt;&gt;&gt;&gt;  2.149560e-01  (sin(x4) * 2.88715) + ((x0 * sin(x0)) + -3.92104)   
-	12        3.353973e-02  (sin(x4 * 1.1155162) * 2.6896117) + (((x0 * 0....   
-	13        1.273127e-06  (sin(sin(x4) * 0.6421045) * 4.706769) + ((x0 *...   
-	14        2.539007e-02  ((sin(x4) * 2.7789357) + -3.8488097) + sin((x0...   
-	15        6.503654e-02  (sin((x0 * x0) * sin(x4 + 1.0346645)) + -3.912...   
-	16        2.329675e-02  (sin(x4) * 2.8874922) + (sin((x0 * sin((x4 * x...   
-	17        2.470213e-02  (((x0 * x0) * sin(sin(exp(x0 * x4)) * 1.194401...   
+	1         2.596927e+00                                         -2.2726457   
+	2         4.073414e-01                                    x4 + -2.7684813   
+	3         4.770055e-01                             (x4 + x4) + -3.2644153   
+	4         1.900821e-01                      (x4 + -1.4215928) * 2.4550738   
+	5         1.122596e+00                       ((x0 + x4) + -3.766932) + x4   
+	6         1.062448e+00                (x4 * 2.459092) + (x0 + -3.9945967)   
+	7         2.566310e-01        ((x4 * 2.4604707) + (x0 * x0)) + -3.8280373   
+	8         4.459062e-08  ((x0 * x0) + (x4 + -3.828038)) + (x4 * 1.4604728)   
+	9   &gt;&gt;&gt;&gt;  1.072845e+00    ((x0 * x0) + -3.918567) + (sin(x4) * 2.8742185)   
+	10        5.908252e-02  ((x0 * (x0 * 0.9405975)) + -3.8984792) + (sin(...   
+	11        1.201339e-02  ((sin(x4) * 2.8734725) + -3.9172218) + (((x0 *...   
+	12        2.686410e-03  ((((x2 * 0.051761005) + x0) * x0) * 0.9188136)...   
+	13        2.204982e-02  ((sin(x4) * 2.9311705) + (x0 * (x0 + (x4 * ((x...   
+	14        9.261696e-02  (sin(x4) * 2.848834) + ((x0 * (x0 * sin((x4 + ...   
+	15        5.744458e-03  (x0 * ((x0 + -0.017147552) * sin((x0 + x4) + 0...   
+	16        6.804990e-03  (sin(x4) * 2.9278073) + ((((((x4 * (x4 * x4)) ...   
 	
 	        loss  complexity  
-	0   8.033255           1  
-	1   0.580375           2  
-	2   0.580375           3  
-	3   0.253458           4  
-	4   0.092597           6  
-	5   0.074357           7  
-	6   0.028037           8  
-	7   0.009889           9  
-	8   0.006751          11  
-	9   0.005854          12  
-	10  0.002759          14  
-	11  0.001448          17  
-	12  0.001309          20  
-	13  0.001309          23  
-	14  0.001276          24  
-	15  0.001196          25  
-	16  0.001141          27  
-	17  0.001060          30  
-]
+	0   7.926341           1  
+	1   0.590529           2  
+	2   0.261474           4  
+	3   0.100718           6  
+	4   0.083283           7  
+	5   0.027103           8  
+	6   0.009367           9  
+	7   0.005607          11  
+	8   0.005607          13  
+	9   0.001918          14  
+	10  0.001606          17  
+	11  0.001549          20  
+	12  0.001541          22  
+	13  0.001507          23  
+	14  0.001374          24  
+	15  0.001351          27  
+	16  0.001332          29  
+]}
 </pre></div>
 </div>
 </div>
@@ -1861,13 +376,15 @@ Outputs from <em>PySR</em> are saved in <code class="docutils literal notranslat
 If left blank, then we choose the best equation chosen by <em>PySR</em>.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model_SR</span><span class="o">.</span><span class="n">mlp</span><span class="o">.</span><span class="n">switch_to_equation</span><span class="p">(</span><span class="n">complexity</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span> 
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">mlp</span><span class="o">.</span><span class="n">switch_to_equation</span><span class="p">(</span><span class="n">complexity</span><span class="o">=</span><span class="p">[</span><span class="mi">14</span><span class="p">])</span> 
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>✅ Successfully switched Sequential to symbolic equation: ((sin(x4) * 2.88608) + -3.9527998) + (x0 * x0)
-📊 Using variables: [&#39;x0&#39;, &#39;x4&#39;].
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>✅ Successfully switched Sequential to symbolic equations for all 1 dimensions:
+   Dimension 0: ((x0 * x0) + -3.918567) + (sin(x4) * 2.8742185)
+   Variables: [&#39;x0&#39;, &#39;x4&#39;]
+🎯 All 1 output dimensions now using symbolic equations.
 </pre></div>
 </div>
 </div>
@@ -1875,19 +392,19 @@ If left blank, then we choose the best equation chosen by <em>PySR</em>.</p>
 <p>Now when running the forwards pass through the model, it uses the symbolic equation instead of the MLP.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">interpretable_outputs</span> <span class="o">=</span> <span class="n">model_SR</span><span class="o">.</span><span class="n">mlp</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">interpretable_outputs</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
 <span class="n">interpretable_outputs</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>tensor([[-2.5125],
-        [-3.3113],
-        [-1.7912],
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>tensor([[-2.7752],
+        [-2.6276],
+        [-3.6235],
         ...,
-        [-1.9278],
-        [-2.5984],
-        [-1.6898]])
+        [-1.2497],
+        [-1.9447],
+        [-3.7815]])
 </pre></div>
 </div>
 </div>
@@ -1897,7 +414,7 @@ If left blank, then we choose the best equation chosen by <em>PySR</em>.</p>
 <h2>Switch to Using the MLP in the Forwards Pass<a class="headerlink" href="#switch-to-using-the-mlp-in-the-forwards-pass" title="Link to this heading"></a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">mlp_outputs</span> <span class="o">=</span> <span class="n">model_SR</span><span class="o">.</span><span class="n">mlp</span><span class="o">.</span><span class="n">switch_to_mlp</span><span class="p">()</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">mlp_outputs</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mlp</span><span class="o">.</span><span class="n">switch_to_mlp</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -1909,19 +426,33 @@ If left blank, then we choose the best equation chosen by <em>PySR</em>.</p>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model_outputs</span> <span class="o">=</span> <span class="n">model_SR</span><span class="o">.</span><span class="n">mlp</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+<span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+    <span class="n">model_outputs</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mlp</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
 <span class="n">model_outputs</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>tensor([[-2.5048],
-        [-3.3643],
-        [-1.7342],
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>tensor([[-2.8287],
+        [-2.6227],
+        [-3.5882],
         ...,
-        [-1.9373],
-        [-2.6174],
-        [-1.6710]], grad_fn=&lt;AddmmBackward0&gt;)
+        [-1.2214],
+        [-1.9201],
+        [-3.7148]])
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model_outputs</span><span class="o">.</span><span class="n">shape</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>torch.Size([8000, 1])
 </pre></div>
 </div>
 </div>
@@ -1946,6 +477,7 @@ If left blank, then we choose the best equation chosen by <em>PySR</em>.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="../api_reference.html" class="btn btn-neutral float-left" title="API Reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="toolkit_demo.html" class="btn btn-neutral float-right" title="SymTorch Toolkit: Pruning" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

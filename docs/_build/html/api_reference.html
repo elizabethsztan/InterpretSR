@@ -60,8 +60,25 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#loading-pre-trained-model-weights">Loading Pre-Trained Model Weights</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#symtorch.utils.load_existing_weights_auto"><code class="docutils literal notranslate"><span class="pre">load_existing_weights_auto()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pruning-mlp">Pruning_MLP</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#symtorch.toolkit.Pruning_MLP"><code class="docutils literal notranslate"><span class="pre">Pruning_MLP</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#symtorch.toolkit.Pruning_MLP.InterpretSR_MLP"><code class="docutils literal notranslate"><span class="pre">Pruning_MLP.InterpretSR_MLP</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#symtorch.toolkit.Pruning_MLP.mlp_name"><code class="docutils literal notranslate"><span class="pre">Pruning_MLP.mlp_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#symtorch.toolkit.Pruning_MLP.pysr_regressor"><code class="docutils literal notranslate"><span class="pre">Pruning_MLP.pysr_regressor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#symtorch.toolkit.Pruning_MLP.initial_dim"><code class="docutils literal notranslate"><span class="pre">Pruning_MLP.initial_dim</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#symtorch.toolkit.Pruning_MLP.current_dim"><code class="docutils literal notranslate"><span class="pre">Pruning_MLP.current_dim</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#symtorch.toolkit.Pruning_MLP.target_dim"><code class="docutils literal notranslate"><span class="pre">Pruning_MLP.target_dim</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#symtorch.toolkit.Pruning_MLP.pruning_schedule"><code class="docutils literal notranslate"><span class="pre">Pruning_MLP.pruning_schedule</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#symtorch.toolkit.Pruning_MLP.pruning_mask"><code class="docutils literal notranslate"><span class="pre">Pruning_MLP.pruning_mask</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#symtorch.toolkit.Pruning_MLP.__init__"><code class="docutils literal notranslate"><span class="pre">Pruning_MLP.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#symtorch.toolkit.Pruning_MLP.set_schedule"><code class="docutils literal notranslate"><span class="pre">Pruning_MLP.set_schedule()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#symtorch.toolkit.Pruning_MLP.prune"><code class="docutils literal notranslate"><span class="pre">Pruning_MLP.prune()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#symtorch.toolkit.Pruning_MLP.get_active_dimensions"><code class="docutils literal notranslate"><span class="pre">Pruning_MLP.get_active_dimensions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#symtorch.toolkit.Pruning_MLP.interpret"><code class="docutils literal notranslate"><span class="pre">Pruning_MLP.interpret()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#symtorch.toolkit.Pruning_MLP.switch_to_equation"><code class="docutils literal notranslate"><span class="pre">Pruning_MLP.switch_to_equation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#symtorch.toolkit.Pruning_MLP.forward"><code class="docutils literal notranslate"><span class="pre">Pruning_MLP.forward()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="#configuration-and-parameters">Configuration and Parameters</a></li>
 </ul>
 </li>
@@ -72,6 +89,7 @@
 <p class="caption" role="heading"><span class="caption-text">Demos:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="demos/getting_started_demo.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="demos/toolkit_demo.html">SymTorch Toolkit: Pruning</a></li>
 </ul>
 
         </div>
@@ -167,20 +185,22 @@ adding interpretability features through symbolic regression.</p>
 <span class="go">                nn.Dropout(0.2),</span>
 <span class="go">                nn.Linear(hidden_dim, output_dim)</span>
 <span class="go">            )</span>
-<span class="go">            self.mlp = MLP_SR(mlp, mlp_name = &quot;Sequential&quot;) # Wrap the mlp</span>
+<span class="go">            self.mlp = mlp</span>
 <span class="go">            with MLP_SR and provide a label</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SimpleModel</span><span class="p">(</span><span class="n">input_dim</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">output_dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="c1"># Initialise the model</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># Train the model normally</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">trained_model</span> <span class="o">=</span> <span class="n">training_function</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">training_function</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Wrap the mlp with the MLP_SR wrapper</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">.</span><span class="n">mlp</span> <span class="o">=</span> <span class="n">MLP_SR</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">mlp</span><span class="p">,</span> <span class="n">mlp_name</span> <span class="o">=</span> <span class="s2">&quot;Sequential&quot;</span><span class="p">)</span> <span class="c1"># Wrap the mlp</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># Apply symbolic regression to the inputs and outputs of the MLP</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">regressor</span> <span class="o">=</span> <span class="n">wrapped_model</span><span class="o">.</span><span class="n">interpret</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">regressor</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mlp</span><span class="o">.</span><span class="n">interpret</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># Switch to using the symbolic equation instead of the MLP in the forwards</span>
 <span class="go">    pass of your deep learning model</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">trained_model</span><span class="o">.</span><span class="n">switch_to_equation</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">.</span><span class="n">switch_to_equation</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># Switch back to using the MLP in the forwards pass</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">trained_model</span><span class="o">.</span><span class="n">switch_to_mlp</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">.</span><span class="n">switch_to_mlp</span><span class="p">()</span>
 </pre></div>
 </div>
 <dl class="field-list simple">
@@ -210,9 +230,9 @@ If None, generates a unique name based on object ID.</p></li>
 <dt class="sig sig-object py" id="symtorch.mlp_sr.MLP_SR.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/symtorch/mlp_sr.html#MLP_SR.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#symtorch.mlp_sr.MLP_SR.forward" title="Link to this definition"></a></dt>
 <dd><p>Forward pass through the model.</p>
-<p>Automatically switches between MLP and symbolic equation based on current mode.
-When using symbolic equation mode, extracts only the required input variables
-and evaluates the discovered symbolic expression.</p>
+<p>Automatically switches between MLP and symbolic equations based on current mode.
+When using symbolic equation mode, evaluates each output dimension separately
+using its corresponding symbolic expression.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><em>torch.Tensor</em></a>) – Input tensor of shape (batch_size, input_dim)</p>
@@ -224,20 +244,24 @@ and evaluates the discovered symbolic expression.</p>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)">torch.Tensor</a></p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.13)"><strong>ValueError</strong></a> – If symbolic equation requires variables not present in input</p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.13)"><strong>ValueError</strong></a> – If symbolic equations require variables not present in input</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="symtorch.mlp_sr.MLP_SR.interpret">
-<span class="sig-name descname"><span class="pre">interpret</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/symtorch/mlp_sr.html#MLP_SR.interpret"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#symtorch.mlp_sr.MLP_SR.interpret" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">interpret</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/symtorch/mlp_sr.html#MLP_SR.interpret"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#symtorch.mlp_sr.MLP_SR.interpret" title="Link to this definition"></a></dt>
 <dd><p>Discover symbolic expressions that approximate the MLP’s behavior.</p>
 <p>Uses PySR to find mathematical expressions that best fit the input-output relationship learned by the neural network.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>inputs</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><em>torch.Tensor</em></a>) – Input data for symbolic regression fitting</p></li>
+<li><p><strong>output_dim</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><em>torch.Tensor</em></a>) – The output dimension to run PySR on. If None, PySR run on all outputs. Default: None.</p></li>
+<li><p><strong>parent_model</strong> (<em>nn.Module</em><em>, </em><em>optional</em>) – The parent model containing this MLP_SR instance.
+If provided, will trace intermediate activations to get
+the actual inputs/outputs at this layer level.</p></li>
 <li><p><strong>**kwargs</strong> – Parameters passed to PySRRegressor. Defaults:
 - binary_operators (list): [“+”, “*”]
 - unary_operators (list): [“inv(x) = 1/x”, “sin”, “exp”]
@@ -267,15 +291,15 @@ are stored</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="symtorch.mlp_sr.MLP_SR.switch_to_equation">
-<span class="sig-name descname"><span class="pre">switch_to_equation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">complexity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/symtorch/mlp_sr.html#MLP_SR.switch_to_equation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#symtorch.mlp_sr.MLP_SR.switch_to_equation" title="Link to this definition"></a></dt>
-<dd><p>Switch the forward pass from MLP to symbolic equation.</p>
+<span class="sig-name descname"><span class="pre">switch_to_equation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">complexity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><span class="pre">list</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/symtorch/mlp_sr.html#MLP_SR.switch_to_equation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#symtorch.mlp_sr.MLP_SR.switch_to_equation" title="Link to this definition"></a></dt>
+<dd><p>Switch the forward pass from MLP to symbolic equations for all output dimensions.</p>
 <p>After calling this method, the model will use the discovered symbolic
-expression instead of the neural network for forward passes. This maintains
-gradient flow for continued training of other model components.</p>
+expressions instead of the neural network for forward passes. This requires
+equations to be available for ALL output dimensions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>complexity</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>, </em><em>optional</em>) – Specific complexity level to use.
-If None, uses the best overall equation.</p>
+<dd class="field-odd"><p><strong>complexity</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>, </em><em>optional</em>) – Specific complexity levels to use for each dimension.
+If None, uses the best overall equation for each dimension.</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -309,29 +333,339 @@ reverting any previous switch_to_equation() call.</p>
 </dd></dl>
 
 </section>
-<section id="loading-pre-trained-model-weights">
-<h2>Loading Pre-Trained Model Weights<a class="headerlink" href="#loading-pre-trained-model-weights" title="Link to this heading"></a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="symtorch.utils.load_existing_weights_auto">
-<span class="sig-prename descclassname"><span class="pre">symtorch.utils.</span></span><span class="sig-name descname"><span class="pre">load_existing_weights_auto</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/symtorch/utils.html#load_existing_weights_auto"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#symtorch.utils.load_existing_weights_auto" title="Link to this definition"></a></dt>
-<dd><p>Automatically detect MLP_SR wrappers in target model and create appropriate mappings.</p>
+<section id="pruning-mlp">
+<h2>Pruning_MLP<a class="headerlink" href="#pruning-mlp" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="symtorch.toolkit.Pruning_MLP">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">symtorch.toolkit.</span></span><span class="sig-name descname"><span class="pre">Pruning_MLP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mlp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.7)"><span class="pre">Module</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">mlp_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/symtorch/toolkit.html#Pruning_MLP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#symtorch.toolkit.Pruning_MLP" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#symtorch.mlp_sr.MLP_SR" title="symtorch.mlp_sr.MLP_SR"><code class="xref py py-class docutils literal notranslate"><span class="pre">MLP_SR</span></code></a></p>
+<p>A PyTorch module wrapper that adds dynamic pruning and symbolic regression capabilities to MLPs.</p>
+<p>This class extends MLP_SR to provide progressive dimensionality reduction through pruning
+while maintaining interpretability features. It dynamically removes less important output
+dimensions during training based on activation variance, then applies symbolic regression
+to the remaining active dimensions.</p>
+<p>The wrapper maintains full compatibility with PyTorch’s training pipeline and inherits
+all MLP_SR functionality for symbolic regression on pruned dimensions.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="symtorch.toolkit.Pruning_MLP.InterpretSR_MLP">
+<span class="sig-name descname"><span class="pre">InterpretSR_MLP</span></span><a class="headerlink" href="#symtorch.toolkit.Pruning_MLP.InterpretSR_MLP" title="Link to this definition"></a></dt>
+<dd><p>The wrapped PyTorch MLP model (inherited from MLP_SR)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>nn.Module</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="symtorch.toolkit.Pruning_MLP.mlp_name">
+<span class="sig-name descname"><span class="pre">mlp_name</span></span><a class="headerlink" href="#symtorch.toolkit.Pruning_MLP.mlp_name" title="Link to this definition"></a></dt>
+<dd><p>Human-readable name for the MLP instance (inherited from MLP_SR)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)">str</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="symtorch.toolkit.Pruning_MLP.pysr_regressor">
+<span class="sig-name descname"><span class="pre">pysr_regressor</span></span><a class="headerlink" href="#symtorch.toolkit.Pruning_MLP.pysr_regressor" title="Link to this definition"></a></dt>
+<dd><p>Dictionary mapping active dimensions to fitted symbolic regression models (inherited from MLP_SR)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="symtorch.toolkit.Pruning_MLP.initial_dim">
+<span class="sig-name descname"><span class="pre">initial_dim</span></span><a class="headerlink" href="#symtorch.toolkit.Pruning_MLP.initial_dim" title="Link to this definition"></a></dt>
+<dd><p>Initial output dimensionality before pruning</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)">int</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="symtorch.toolkit.Pruning_MLP.current_dim">
+<span class="sig-name descname"><span class="pre">current_dim</span></span><a class="headerlink" href="#symtorch.toolkit.Pruning_MLP.current_dim" title="Link to this definition"></a></dt>
+<dd><p>Current number of active dimensions</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)">int</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="symtorch.toolkit.Pruning_MLP.target_dim">
+<span class="sig-name descname"><span class="pre">target_dim</span></span><a class="headerlink" href="#symtorch.toolkit.Pruning_MLP.target_dim" title="Link to this definition"></a></dt>
+<dd><p>Final target dimensionality after pruning</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)">int</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="symtorch.toolkit.Pruning_MLP.pruning_schedule">
+<span class="sig-name descname"><span class="pre">pruning_schedule</span></span><a class="headerlink" href="#symtorch.toolkit.Pruning_MLP.pruning_schedule" title="Link to this definition"></a></dt>
+<dd><p>Mapping from epoch to target dimensions</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="symtorch.toolkit.Pruning_MLP.pruning_mask">
+<span class="sig-name descname"><span class="pre">pruning_mask</span></span><a class="headerlink" href="#symtorch.toolkit.Pruning_MLP.pruning_mask" title="Link to this definition"></a></dt>
+<dd><p>Boolean mask indicating active dimensions</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)">torch.Tensor</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">symtorch.toolkit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pruning_MLP</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Create a composite model</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span><span class="w"> </span><span class="nc">SimpleModel</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dim</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">,</span> <span class="n">output_dim_f</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="o">=</span><span class="mi">128</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="nb">super</span><span class="p">(</span><span class="n">SimpleModel</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+<span class="gp">... </span>        <span class="bp">self</span><span class="o">.</span><span class="n">f_net</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+<span class="gp">... </span>            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">),</span>
+<span class="gp">... </span>            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+<span class="gp">... </span>            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_dim</span><span class="p">,</span> <span class="n">output_dim_f</span><span class="p">)</span>
+<span class="gp">... </span>        <span class="p">)</span>
+<span class="gp">... </span>        <span class="bp">self</span><span class="o">.</span><span class="n">g_net</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">output_dim_f</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">)</span>
+<span class="gp">...</span>
+<span class="gp">... </span>    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">f_net</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="gp">... </span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">g_net</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="n">x</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Create model and wrap f_net with pruning</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SimpleModel</span><span class="p">(</span><span class="n">input_dim</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">output_dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">output_dim_f</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">.</span><span class="n">f_net</span> <span class="o">=</span> <span class="n">Pruning_MLP</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">f_net</span><span class="p">,</span>
+<span class="gp">... </span>                         <span class="n">initial_dim</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+<span class="gp">... </span>                         <span class="n">target_dim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+<span class="gp">... </span>                         <span class="n">mlp_name</span><span class="o">=</span><span class="s2">&quot;f_net&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Set up pruning schedule</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">epochs</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">.</span><span class="n">f_net</span><span class="o">.</span><span class="n">set_schedule</span><span class="p">(</span><span class="n">total_epochs</span><span class="o">=</span><span class="n">epochs</span><span class="p">,</span> <span class="n">end_epoch_frac</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># During training loop</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="c1"># ... training code ...</span>
+<span class="gp">... </span>    <span class="n">model</span><span class="o">.</span><span class="n">f_net</span><span class="o">.</span><span class="n">prune</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">validation_data</span><span class="p">)</span>  <span class="c1"># Prune based on importance</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Apply symbolic regression to active dimensions only</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">regressor</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">f_net</span><span class="o">.</span><span class="n">interpret</span><span class="p">(</span><span class="n">train_inputs</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Switch to using symbolic equations for active dimensions</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">.</span><span class="n">f_net</span><span class="o">.</span><span class="n">switch_to_equation</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Switch back to using the MLP</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">.</span><span class="n">f_net</span><span class="o">.</span><span class="n">switch_to_mlp</span><span class="p">()</span>
+</pre></div>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>file</strong> – Path to the saved model weights</p></li>
-<li><p><strong>target_model</strong> – The model instance with MLP_SR wrappers to load weights into</p></li>
+<li><p><strong>mlp</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a></span>)</p></li>
+<li><p><strong>initial_dim</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></span>)</p></li>
+<li><p><strong>target_dim</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></span>)</p></li>
+<li><p><strong>mlp_name</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="symtorch.toolkit.Pruning_MLP.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mlp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.7)"><span class="pre">Module</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">mlp_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/symtorch/toolkit.html#Pruning_MLP.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#symtorch.toolkit.Pruning_MLP.__init__" title="Link to this definition"></a></dt>
+<dd><p>Initialise the Pruning_MLP wrapper.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mlp</strong> (<em>nn.Module</em>) – The PyTorch MLP model to wrap</p></li>
+<li><p><strong>initial_dim</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Initial output dimensionality before pruning</p></li>
+<li><p><strong>target_dim</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Target output dimensionality after pruning</p></li>
+<li><p><strong>mlp_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Human-readable name for this MLP instance.
+If None, generates a unique name based on object ID.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="symtorch.toolkit.Pruning_MLP.set_schedule">
+<span class="sig-name descname"><span class="pre">set_schedule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">total_epochs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">decay_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'cosine'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_epoch_frac</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/symtorch/toolkit.html#Pruning_MLP.set_schedule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#symtorch.toolkit.Pruning_MLP.set_schedule" title="Link to this definition"></a></dt>
+<dd><p>Set up the pruning schedule for progressive dimensionality reduction.</p>
+<p>Creates a schedule that progressively reduces dimensions from initial_dim to target_dim
+over the specified fraction of training epochs using the chosen decay strategy.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>total_epochs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Total number of training epochs</p></li>
+<li><p><strong>decay_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Pruning schedule type. Options:
+- ‘cosine’: Cosine annealing schedule (default)
+- ‘linear’: Linear reduction schedule
+- ‘exp’: Exponential decay schedule</p></li>
+<li><p><strong>end_epoch_frac</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Fraction of total epochs to complete pruning by.
+Defaults to 0.5 (pruning ends halfway through training)</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">pruned_mlp</span><span class="o">.</span><span class="n">set_schedule</span><span class="p">(</span><span class="n">total_epochs</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">decay_rate</span><span class="o">=</span><span class="s1">&#39;cosine&#39;</span><span class="p">,</span> <span class="n">end_epoch_frac</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="symtorch.toolkit.Pruning_MLP.prune">
+<span class="sig-name descname"><span class="pre">prune</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">epoch</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><span class="pre">Tensor</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/symtorch/toolkit.html#Pruning_MLP.prune"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#symtorch.toolkit.Pruning_MLP.prune" title="Link to this definition"></a></dt>
+<dd><p>Perform pruning for the current epoch based on the pruning schedule.</p>
+<p>Evaluates the importance of each output dimension by computing the standard deviation
+of activations across the sample data. Retains the most important dimensions according
+to the current epoch’s target dimensionality.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>epoch</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Current training epoch</p></li>
+<li><p><strong>sample_data</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><em>torch.Tensor</em></a>) – Sample input data to evaluate dimension importance.
+Typically a subset of validation data.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This method should be called during each training epoch. If the current epoch
+is not in the pruning schedule, no pruning is performed.</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="symtorch.toolkit.Pruning_MLP.get_active_dimensions">
+<span class="sig-name descname"><span class="pre">get_active_dimensions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/symtorch/toolkit.html#Pruning_MLP.get_active_dimensions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#symtorch.toolkit.Pruning_MLP.get_active_dimensions" title="Link to this definition"></a></dt>
+<dd><p>Get indices of currently active (non-masked) dimensions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>List of integer indices for dimensions that are currently active</dt><dd><p>(not pruned/masked)</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)">list</a></p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">active_dims</span> <span class="o">=</span> <span class="n">pruned_mlp</span><span class="o">.</span><span class="n">get_active_dimensions</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Active dimensions: </span><span class="si">{</span><span class="n">active_dims</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="go">Active dimensions: [5, 12, 18]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="symtorch.toolkit.Pruning_MLP.interpret">
+<span class="sig-name descname"><span class="pre">interpret</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">pysr_kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/symtorch/toolkit.html#Pruning_MLP.interpret"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#symtorch.toolkit.Pruning_MLP.interpret" title="Link to this definition"></a></dt>
+<dd><p>Discover symbolic expressions for active (non-pruned) dimensions only.</p>
+<p>Overrides MLP_SR’s interpret method to focus symbolic regression on dimensions
+that survived the pruning process, ignoring inactive/masked dimensions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sample_data</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><em>torch.Tensor</em></a><em> or </em><em>DataLoader</em>) – Input data for symbolic regression fitting.
+Can be tensor or DataLoader for batched processing.</p></li>
+<li><p><strong>parent_model</strong> (<em>nn.Module</em><em>, </em><em>optional</em>) – The parent model containing this Pruning_MLP instance.
+If provided, will trace intermediate activations to get
+the actual inputs/outputs at this layer level.</p></li>
+<li><p><strong>**pysr_kwargs</strong> – Parameters passed to PySRRegressor. Inherits same defaults as MLP_SR:
+- binary_operators (list): [“+”, “*”]
+- unary_operators (list): [“inv(x) = 1/x”, “sin”, “exp”]
+- niterations (int): 400
+- output_directory (str): “SR_output/{mlp_name}”
+- run_id (str): “dim{dim_idx}_{timestamp}”</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Dict of adapted weights that can be loaded into target_model</p>
+<dd class="field-even"><p>Dictionary mapping active dimension indices to fitted PySRRegressor objects</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)">dict</a></p>
 </dd>
 </dl>
-<p>Example:
-&gt;&gt;&gt; # Loading trained model weights onto a model using InterpretSR
-&gt;&gt;&gt; from interpretsr.utils import load_existing_weights_auto
-&gt;&gt;&gt; model_with_MLP_SR = model() # Initialise your model with MLP_SR wrappings
-&gt;&gt;&gt; weights = load_existing_weights_auto(‘original_model_weights.pth’) # Adapt existing weights for InterpretSR compatibility
-&gt;&gt;&gt; model_with_MLP_SR.load_state_dict(weights) # Load adapted weights onto the model</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">regressors</span> <span class="o">=</span> <span class="n">pruned_mlp</span><span class="o">.</span><span class="n">interpret</span><span class="p">(</span><span class="n">train_data</span><span class="p">,</span> <span class="n">niterations</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">dim_idx</span><span class="p">,</span> <span class="n">regressor</span> <span class="ow">in</span> <span class="n">regressors</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Dimension </span><span class="si">{</span><span class="n">dim_idx</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">regressor</span><span class="o">.</span><span class="n">get_best</span><span class="p">()[</span><span class="s1">&#39;equation&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="symtorch.toolkit.Pruning_MLP.switch_to_equation">
+<span class="sig-name descname"><span class="pre">switch_to_equation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">complexity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><span class="pre">list</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/symtorch/toolkit.html#Pruning_MLP.switch_to_equation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#symtorch.toolkit.Pruning_MLP.switch_to_equation" title="Link to this definition"></a></dt>
+<dd><p>Switch forward pass to use symbolic equations for active dimensions only.</p>
+<p>Overrides MLP_SR’s switch_to_equation to handle pruned architectures correctly.
+Active dimensions use their discovered symbolic expressions, while inactive
+dimensions output zeros as enforced by the pruning mask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>complexity</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>, </em><em>optional</em>) – Specific complexity levels to use.
+If list, maps to active dimensions in order.
+If int, uses same complexity for all active dimensions.
+If None, uses best overall equation for each active dimension.</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">pruned_mlp</span><span class="o">.</span><span class="n">switch_to_equation</span><span class="p">()</span>  <span class="c1"># Use best equations for all active dimensions</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pruned_mlp</span><span class="o">.</span><span class="n">switch_to_equation</span><span class="p">(</span><span class="n">complexity</span><span class="o">=</span><span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">7</span><span class="p">])</span>  <span class="c1"># Use complexity 5 for first active dim, 7 for second</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="symtorch.toolkit.Pruning_MLP.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/symtorch/toolkit.html#Pruning_MLP.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#symtorch.toolkit.Pruning_MLP.forward" title="Link to this definition"></a></dt>
+<dd><p>Forward pass through the model with pruning mask applied.</p>
+<p>Automatically switches between MLP and symbolic equations based on current mode.
+When using MLP mode, applies pruning mask to zero out inactive dimensions.
+When using symbolic equation mode, evaluates equations only for active dimensions
+and outputs zeros for inactive dimensions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><em>torch.Tensor</em></a>) – Input tensor of shape (batch_size, input_dim)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>Output tensor of shape (batch_size, initial_dim) with inactive</dt><dd><p>dimensions masked to zero</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)">torch.Tensor</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.13)"><strong>ValueError</strong></a> – If symbolic equations require variables not present in input</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <section id="configuration-and-parameters">
