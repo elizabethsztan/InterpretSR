@@ -10,3 +10,5 @@ torch_symbolic.egg-info
 #pysr outputs
 docs/SR_output
 
+#testing files 
+docs/demos/script.py
