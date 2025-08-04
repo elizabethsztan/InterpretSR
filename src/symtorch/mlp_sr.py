@@ -142,7 +142,7 @@ class MLP_SR(nn.Module):
         else:
             return self.InterpretSR_MLP(x)
 
-    def interpret(self, inputs, output_dim: int = None, **kwargs):
+    def interpret(self, inputs, output_dim: int = None, parent_model=None, **kwargs):
         """
         Discover symbolic expressions that approximate the MLP's behavior.
         
@@ -151,6 +151,9 @@ class MLP_SR(nn.Module):
         Args:
             inputs (torch.Tensor): Input data for symbolic regression fitting
             output_dim(torch.Tensor): The output dimension to run PySR on. If None, PySR run on all outputs. Default: None.
+            parent_model (nn.Module, optional): The parent model containing this MLP_SR instance.
+                                              If provided, will trace intermediate activations to get
+                                              the actual inputs/outputs at this layer level.
             **kwargs: Parameters passed to PySRRegressor. Defaults:
                 - binary_operators (list): ["+", "*"]
                 - unary_operators (list): ["inv(x) = 1/x", "sin", "exp"]
@@ -170,10 +173,40 @@ class MLP_SR(nn.Module):
             >>> print(regressor.get_best()['equation'])
         """
 
-        # Extract outputs from MLP
-        self.InterpretSR_MLP.eval()
-        with torch.no_grad():
-            output = self.InterpretSR_MLP(inputs)
+        # Extract inputs and outputs at this layer level
+        if parent_model is not None:
+            # Use forward hooks to capture inputs/outputs at this specific layer
+            layer_inputs = []
+            layer_outputs = []
+            
+            def hook_fn(module, input, output):
+                if module is self.InterpretSR_MLP:
+                    layer_inputs.append(input[0].clone())
+                    layer_outputs.append(output.clone())
+            
+            # Register forward hook
+            hook = self.InterpretSR_MLP.register_forward_hook(hook_fn)
+            
+            # Run parent model to capture intermediate activations
+            parent_model.eval()
+            with torch.no_grad():
+                _ = parent_model(inputs)
+            
+            # Remove hook
+            hook.remove()
+            
+            # Use captured intermediate data
+            if layer_inputs and layer_outputs:
+                actual_inputs = layer_inputs[0]
+                output = layer_outputs[0]
+            else:
+                raise RuntimeError("Failed to capture intermediate activations. Ensure parent_model contains this MLP_SR instance.")
+        else:
+            # Original behavior - use MLP directly
+            actual_inputs = inputs
+            self.InterpretSR_MLP.eval()
+            with torch.no_grad():
+                output = self.InterpretSR_MLP(inputs)
 
         timestamp = int(time.time())
 
@@ -203,7 +236,7 @@ class MLP_SR(nn.Module):
                 params = {**default_params, **kwargs}
                 regressor = PySRRegressor(**params)
 
-                regressor.fit(inputs.detach(), output.detach()[:, dim])
+                regressor.fit(actual_inputs.detach(), output.detach()[:, dim])
 
                 pysr_regressors[dim] = regressor
 
@@ -228,7 +261,7 @@ class MLP_SR(nn.Module):
             params = {**default_params, **kwargs}
             regressor = PySRRegressor(**params)
 
-            regressor.fit(inputs.detach(), output.detach()[:, output_dim])
+            regressor.fit(actual_inputs.detach(), output.detach()[:, output_dim])
             pysr_regressors[output_dim] = regressor
 
             print(f"💡Best equation for output {output_dim} found to be {regressor.get_best()['equation']}.")
