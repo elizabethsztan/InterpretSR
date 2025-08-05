@@ -431,9 +431,6 @@ class MLP_SR(nn.Module):
         
         Restores the neural network as the primary forward pass mechanism,
         reverting any previous switch_to_equation() call.
-        
-        Returns:
-            bool: True if switch was successful, False if no original MLP stored
             
         Example:
             >>> model.switch_to_equation()  # Use symbolic equation
@@ -444,7 +441,5 @@ class MLP_SR(nn.Module):
             self.InterpretSR_MLP = self._original_mlp
             self._using_equation = False
             print(f"✅ Switched {self.mlp_name} back to MLP")
-            return True
         else:
             print("❗ No original MLP stored to switch back to")
-            return False
