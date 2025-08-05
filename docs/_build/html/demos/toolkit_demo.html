@@ -149,10 +149,11 @@
 &amp; f_1 = \sin{x_4}
 \end{aligned}
 \end{split}\]</div>
-<p>and <span class="math notranslate nohighlight">\(g\)</span> is just a linear transformation of <span class="math notranslate nohighlight">\(f_0\)</span> and <span class="math notranslate nohighlight">\(f_1\)</span>
-$<span class="math notranslate nohighlight">\(
+<p>and <span class="math notranslate nohighlight">\(g\)</span> is just a linear transformation of <span class="math notranslate nohighlight">\(f_0\)</span> and <span class="math notranslate nohighlight">\(f_1\)</span></p>
+<div class="math notranslate nohighlight">
+\[
 g(\mathbf{f}) = 2.5f_0 -1.3f_1
-\)</span>$</p>
+\]</div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -183,6 +184,15 @@ g(\mathbf{f}) = 2.5f_0 -1.3f_1
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">symtorch.toolkit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pruning_MLP</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/Users/liz/PhD/SymTorch_project/symtorch_venv/lib/python3.11/site-packages/juliacall/__init__.py:61: UserWarning: torch was imported before juliacall. This may cause a segfault. To avoid this, import juliacall before importing torch. For updates, see https://github.com/pytorch/pytorch/issues/78829.
+  warnings.warn(
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Detected IPython. Loading juliacall extension. See https://juliapy.github.io/PythonCall.jl/stable/compat/#IPython
 </pre></div>
 </div>
 </div>
@@ -256,7 +266,8 @@ g(\mathbf{f}) = 2.5f_0 -1.3f_1
         <span class="n">loss_tracker</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">epoch_loss</span><span class="p">)</span>
         <span class="n">active_dims_tracker</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">f_net</span><span class="o">.</span><span class="n">pruning_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
 
-        <span class="n">model</span><span class="o">.</span><span class="n">f_net</span><span class="o">.</span><span class="n">prune</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">X_val</span><span class="p">)</span> <span class="c1"># Pass in the validation set (or a subset of) to the model</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">f_net</span><span class="o">.</span><span class="n">prune</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">sample_data</span> <span class="o">=</span> <span class="n">X_val</span><span class="p">,</span> <span class="c1"># Pass in the validation set (or a subset of) to the model</span>
+                          <span class="n">parent_model</span> <span class="o">=</span> <span class="n">model</span><span class="p">)</span> <span class="c1"># Pass in the parent model to get the correct inputs to the layer</span>
 
         <span class="k">if</span> <span class="p">(</span><span class="n">epoch</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">avg_loss</span> <span class="o">=</span> <span class="n">epoch_loss</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">dataloader</span><span class="p">)</span>
@@ -291,16 +302,16 @@ g(\mathbf{f}) = 2.5f_0 -1.3f_1
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Starting training...
-Epoch [10/100], Avg Loss: 0.014917, Active dims: 30
-Epoch [20/100], Avg Loss: 0.011608, Active dims: 26
-Epoch [30/100], Avg Loss: 0.009897, Active dims: 20
-Epoch [40/100], Avg Loss: 0.009762, Active dims: 14
-Epoch [50/100], Avg Loss: 0.009537, Active dims: 8
-Epoch [60/100], Avg Loss: 0.008782, Active dims: 3
-Epoch [70/100], Avg Loss: 0.008280, Active dims: 2
-Epoch [80/100], Avg Loss: 0.008194, Active dims: 2
-Epoch [90/100], Avg Loss: 0.007955, Active dims: 2
-Epoch [100/100], Avg Loss: 0.007329, Active dims: 2
+Epoch [10/100], Avg Loss: 0.002220, Active dims: 30
+Epoch [20/100], Avg Loss: 0.002183, Active dims: 26
+Epoch [30/100], Avg Loss: 0.002178, Active dims: 20
+Epoch [40/100], Avg Loss: 0.001981, Active dims: 14
+Epoch [50/100], Avg Loss: 0.001981, Active dims: 8
+Epoch [60/100], Avg Loss: 0.001863, Active dims: 3
+Epoch [70/100], Avg Loss: 0.001704, Active dims: 2
+Epoch [80/100], Avg Loss: 0.001716, Active dims: 2
+Epoch [90/100], Avg Loss: 0.001677, Active dims: 2
+Epoch [100/100], Avg Loss: 0.001740, Active dims: 2
 Training completed!
 </pre></div>
 </div>
@@ -433,14 +444,15 @@ In the above image, the pruning finishes at epoch 75 and we prune 100 dimensions
 </div>
 </div>
 <p>You can see that the outputs of the <code class="docutils literal notranslate"><span class="pre">f_net</span></code> NN are linear combinations of the f function.</p>
-<p>We can even perform SR on the <code class="docutils literal notranslate"><span class="pre">g_net</span></code> to show that this layer is just a linear transformation of the inputs.</p>
+<p>We can even perform SR on the <code class="docutils literal notranslate"><span class="pre">g_net</span></code> to show that this layer is just a linear transformation of the inputs.<br />
+Because <code class="docutils literal notranslate"><span class="pre">g_net</span></code> is an intermediate layer of the MLP, we need to pass in the <code class="docutils literal notranslate"><span class="pre">parent_model</span></code> (the whole model) to get the correct inputs to <code class="docutils literal notranslate"><span class="pre">g_net</span></code> for symbolic regression.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">symtorch.mlp_sr</span><span class="w"> </span><span class="kn">import</span> <span class="n">MLP_SR</span>
 
 <span class="n">model</span><span class="o">.</span><span class="n">g_net</span> <span class="o">=</span> <span class="n">MLP_SR</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">g_net</span><span class="p">,</span> <span class="n">mlp_name</span><span class="o">=</span><span class="s1">&#39;g_net&#39;</span><span class="p">)</span>
 <span class="n">model</span><span class="o">.</span><span class="n">g_net</span><span class="o">.</span><span class="n">interpret</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">X_train</span><span class="p">),</span> 
-                     <span class="n">parent_model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+                     <span class="n">parent_model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="c1"># Pass in the parent_model because g_net is an intermediate layer</span>
                      <span class="n">verbosity</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
                      <span class="n">niterations</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
                      <span class="n">complexity_of_operators</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;sin&quot;</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;exp&quot;</span><span class="p">:</span><span class="mi">3</span><span class="p">},</span> 

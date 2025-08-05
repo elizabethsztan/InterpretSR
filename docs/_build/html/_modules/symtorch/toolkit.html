@@ -263,7 +263,7 @@
 
 <div class="viewcode-block" id="Pruning_MLP.prune">
 <a class="viewcode-back" href="../../api_reference.html#symtorch.toolkit.Pruning_MLP.prune">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">prune</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">sample_data</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">prune</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">sample_data</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">parent_model</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Perform pruning for the current epoch based on the pruning schedule.</span>
 <span class="sd">        </span>
@@ -275,6 +275,9 @@
 <span class="sd">            epoch (int): Current training epoch</span>
 <span class="sd">            sample_data (torch.Tensor): Sample input data to evaluate dimension importance.</span>
 <span class="sd">                                       Typically a subset of validation data.</span>
+<span class="sd">            parent_model (nn.Module, optional): The parent model containing this Pruning_MLP instance.</span>
+<span class="sd">                                              If provided, will trace intermediate activations to get</span>
+<span class="sd">                                              the actual outputs at this layer level for importance evaluation.</span>
 <span class="sd">                                       </span>
 <span class="sd">        Note:</span>
 <span class="sd">            This method should be called during each training epoch. If the current epoch</span>
@@ -289,8 +292,33 @@
         <span class="n">target_dims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pruning_schedule</span><span class="p">[</span><span class="n">epoch</span><span class="p">]</span>
         
         <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
-
-            <span class="n">output_array</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">InterpretSR_MLP</span><span class="p">(</span><span class="n">sample_data</span><span class="p">)</span>
+            <span class="c1"># Extract outputs at this layer level for importance evaluation</span>
+            <span class="k">if</span> <span class="n">parent_model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># Use forward hooks to capture outputs at this specific layer</span>
+                <span class="n">layer_outputs</span> <span class="o">=</span> <span class="p">[]</span>
+                
+                <span class="k">def</span><span class="w"> </span><span class="nf">hook_fn</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">module</span> <span class="ow">is</span> <span class="bp">self</span><span class="o">.</span><span class="n">InterpretSR_MLP</span><span class="p">:</span>
+                        <span class="n">layer_outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">clone</span><span class="p">())</span>
+                
+                <span class="c1"># Register forward hook</span>
+                <span class="n">hook</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">InterpretSR_MLP</span><span class="o">.</span><span class="n">register_forward_hook</span><span class="p">(</span><span class="n">hook_fn</span><span class="p">)</span>
+                
+                <span class="c1"># Run parent model to capture intermediate activations</span>
+                <span class="n">parent_model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+                <span class="n">_</span> <span class="o">=</span> <span class="n">parent_model</span><span class="p">(</span><span class="n">sample_data</span><span class="p">)</span>
+                
+                <span class="c1"># Remove hook</span>
+                <span class="n">hook</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
+                
+                <span class="c1"># Use captured intermediate data</span>
+                <span class="k">if</span> <span class="n">layer_outputs</span><span class="p">:</span>
+                    <span class="n">output_array</span> <span class="o">=</span> <span class="n">layer_outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Failed to capture intermediate activations. Ensure parent_model contains this MLP_SR instance.&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Original behavior - use MLP directly</span>
+                <span class="n">output_array</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">InterpretSR_MLP</span><span class="p">(</span><span class="n">sample_data</span><span class="p">)</span>
 
             <span class="n">output_importance</span> <span class="o">=</span> <span class="n">output_array</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
             <span class="n">most_important</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">output_importance</span><span class="p">)[</span><span class="o">-</span><span class="n">target_dims</span><span class="p">:]</span>
@@ -329,8 +357,7 @@
 <span class="sd">        that survived the pruning process, ignoring inactive/masked dimensions.</span>
 <span class="sd">        </span>
 <span class="sd">        Args:</span>
-<span class="sd">            sample_data (torch.Tensor or DataLoader): Input data for symbolic regression fitting.</span>
-<span class="sd">                                                     Can be tensor or DataLoader for batched processing.</span>
+<span class="sd">            sample_data (torch.Tensor): Input data for symbolic regression fitting.</span>
 <span class="sd">            parent_model (nn.Module, optional): The parent model containing this Pruning_MLP instance.</span>
 <span class="sd">                                              If provided, will trace intermediate activations to get</span>
 <span class="sd">                                              the actual inputs/outputs at this layer level.</span>
@@ -387,24 +414,9 @@
             <span class="c1"># Original behavior - extract inputs and outputs for active dimensions only</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">InterpretSR_MLP</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
             <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sample_data</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
-                    <span class="n">inputs</span> <span class="o">=</span> <span class="n">sample_data</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
-                    <span class="n">full_output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">InterpretSR_MLP</span><span class="p">(</span><span class="n">sample_data</span><span class="p">)</span>
-                    <span class="n">active_output</span> <span class="o">=</span> <span class="n">full_output</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pruning_mask</span><span class="p">]</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="c1"># Handle DataLoader case</span>
-                    <span class="n">all_inputs</span><span class="p">,</span> <span class="n">all_active_outputs</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
-                    <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">sample_data</span><span class="p">:</span>
-                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
-                            <span class="n">batch_inputs</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-                        <span class="k">else</span><span class="p">:</span>
-                            <span class="n">batch_inputs</span> <span class="o">=</span> <span class="n">batch</span>
-                        <span class="n">full_output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">InterpretSR_MLP</span><span class="p">(</span><span class="n">batch_inputs</span><span class="p">)</span>
-                        <span class="n">active_output</span> <span class="o">=</span> <span class="n">full_output</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pruning_mask</span><span class="p">]</span>
-                        <span class="n">all_inputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">batch_inputs</span><span class="p">)</span>
-                        <span class="n">all_active_outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">active_output</span><span class="p">)</span>
-                    <span class="n">inputs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">all_inputs</span><span class="p">)</span>
-                    <span class="n">active_output</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">all_active_outputs</span><span class="p">)</span>
+                <span class="n">inputs</span> <span class="o">=</span> <span class="n">sample_data</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+                <span class="n">full_output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">InterpretSR_MLP</span><span class="p">(</span><span class="n">sample_data</span><span class="p">)</span>
+                <span class="n">active_output</span> <span class="o">=</span> <span class="n">full_output</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pruning_mask</span><span class="p">]</span>
 
         <span class="n">timestamp</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span>
         
