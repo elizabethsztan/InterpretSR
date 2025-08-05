@@ -210,7 +210,7 @@ class Pruning_MLP(MLP_SR):
                 # Use forward hooks to capture outputs at this specific layer
                 layer_outputs = []
                 
-                def hook_fn(module, input, output):
+                def hook_fn(module, _, output):
                     if module is self.InterpretSR_MLP:
                         layer_outputs.append(output.clone())
                 
