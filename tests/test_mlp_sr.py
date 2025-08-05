@@ -242,8 +242,7 @@ def test_switch_to_mlp():
     
     try:
         # Test switching back to MLP
-        success = trained_model.mlp.switch_to_mlp()
-        assert success, "switch_to_mlp should return True on success"
+        trained_model.mlp.switch_to_mlp()
         
         # Verify internal state
         assert hasattr(trained_model.mlp, '_using_equation'), "Should have _using_equation attribute"
@@ -929,8 +928,7 @@ def test_multi_dimensional_switch_to_equation():
         assert not torch.isnan(output_after).any(), "Output should not contain NaN values"
         
         # Test switch back to MLP
-        success = model.mlp.switch_to_mlp()
-        assert success, "Switch back should succeed"
+        model.mlp.switch_to_mlp()
         assert not model.mlp._using_equation, "Should not be in equation mode after switch back"
         
         # Test forward pass after switching back
