@@ -176,7 +176,7 @@ class Pruning_MLP(MLP_SR):
 
         self.pruning_schedule = schedule_dict
 
-    def prune(self, epoch: int, sample_data: torch.Tensor):
+    def prune(self, epoch: int, sample_data: torch.Tensor, parent_model=None):
         """
         Perform pruning for the current epoch based on the pruning schedule.
         
@@ -188,6 +188,9 @@ class Pruning_MLP(MLP_SR):
             epoch (int): Current training epoch
             sample_data (torch.Tensor): Sample input data to evaluate dimension importance.
                                        Typically a subset of validation data.
+            parent_model (nn.Module, optional): The parent model containing this Pruning_MLP instance.
+                                              If provided, will trace intermediate activations to get
+                                              the actual outputs at this layer level for importance evaluation.
                                        
         Note:
             This method should be called during each training epoch. If the current epoch
@@ -202,8 +205,33 @@ class Pruning_MLP(MLP_SR):
         target_dims = self.pruning_schedule[epoch]
         
         with torch.no_grad():
-
-            output_array = self.InterpretSR_MLP(sample_data)
+            # Extract outputs at this layer level for importance evaluation
+            if parent_model is not None:
+                # Use forward hooks to capture outputs at this specific layer
+                layer_outputs = []
+                
+                def hook_fn(module, input, output):
+                    if module is self.InterpretSR_MLP:
+                        layer_outputs.append(output.clone())
+                
+                # Register forward hook
+                hook = self.InterpretSR_MLP.register_forward_hook(hook_fn)
+                
+                # Run parent model to capture intermediate activations
+                parent_model.eval()
+                _ = parent_model(sample_data)
+                
+                # Remove hook
+                hook.remove()
+                
+                # Use captured intermediate data
+                if layer_outputs:
+                    output_array = layer_outputs[0]
+                else:
+                    raise RuntimeError("Failed to capture intermediate activations. Ensure parent_model contains this MLP_SR instance.")
+            else:
+                # Original behavior - use MLP directly
+                output_array = self.InterpretSR_MLP(sample_data)
 
             output_importance = output_array.std(dim=0)
             most_important = torch.argsort(output_importance)[-target_dims:]
@@ -236,8 +264,7 @@ class Pruning_MLP(MLP_SR):
         that survived the pruning process, ignoring inactive/masked dimensions.
         
         Args:
-            sample_data (torch.Tensor or DataLoader): Input data for symbolic regression fitting.
-                                                     Can be tensor or DataLoader for batched processing.
+            sample_data (torch.Tensor): Input data for symbolic regression fitting.
             parent_model (nn.Module, optional): The parent model containing this Pruning_MLP instance.
                                               If provided, will trace intermediate activations to get
                                               the actual inputs/outputs at this layer level.
@@ -294,24 +321,9 @@ class Pruning_MLP(MLP_SR):
             # Original behavior - extract inputs and outputs for active dimensions only
             self.InterpretSR_MLP.eval()
             with torch.no_grad():
-                if isinstance(sample_data, torch.Tensor):
-                    inputs = sample_data.detach()
-                    full_output = self.InterpretSR_MLP(sample_data)
-                    active_output = full_output[:, self.pruning_mask]
-                else:
-                    # Handle DataLoader case
-                    all_inputs, all_active_outputs = [], []
-                    for batch in sample_data:
-                        if isinstance(batch, (list, tuple)):
-                            batch_inputs = batch[0]
-                        else:
-                            batch_inputs = batch
-                        full_output = self.InterpretSR_MLP(batch_inputs)
-                        active_output = full_output[:, self.pruning_mask]
-                        all_inputs.append(batch_inputs)
-                        all_active_outputs.append(active_output)
-                    inputs = torch.cat(all_inputs)
-                    active_output = torch.cat(all_active_outputs)
+                inputs = sample_data.detach()
+                full_output = self.InterpretSR_MLP(sample_data)
+                active_output = full_output[:, self.pruning_mask]
 
         timestamp = int(time.time())
         
