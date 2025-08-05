@@ -97,20 +97,6 @@ class Pruning_MLP(MLP_SR):
         self.pruning_schedule = None
         self.pruning_mask = torch.ones(self.current_dim, dtype=torch.bool)
     
-    def forward(self, x):
-        """
-        Forward pass with pruning mask applied to MLP_SR output.
-        
-        Args:
-            x (torch.Tensor): Input tensor of shape (batch_size, input_dim)
-            
-        Returns:
-            torch.Tensor: Output tensor with inactive dimensions masked to zero
-        """
-        # Use parent's forward method (handles symbolic/MLP switching)
-        output = super().forward(x)
-        # Apply pruning mask to zero out inactive dimensions
-        return output * self.pruning_mask
 
     def set_schedule(self, total_epochs: int, decay_rate: str = 'cosine', end_epoch_frac: float = 0.5):
         """
