@@ -95,7 +95,8 @@ class Pruning_MLP(MLP_SR):
         self.current_dim = initial_dim 
         self.target_dim = target_dim
         self.pruning_schedule = None
-        self.pruning_mask = torch.ones(self.current_dim, dtype=torch.bool)
+        # Register pruning_mask as a buffer so it moves with the model
+        self.register_buffer('pruning_mask', torch.ones(self.current_dim, dtype=torch.bool))
     
 
     def set_schedule(self, total_epochs: int, decay_rate: str = 'cosine', end_epoch_frac: float = 0.5):
@@ -224,7 +225,8 @@ class Pruning_MLP(MLP_SR):
             
             new_mask = torch.zeros_like(self.pruning_mask)
             new_mask[most_important] = True
-            self.pruning_mask = new_mask
+            # Update the registered buffer (this maintains device consistency)
+            self.pruning_mask.data = new_mask.data
             self.current_dim = target_dims
 
     def get_active_dimensions(self):
