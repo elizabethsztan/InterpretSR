@@ -161,7 +161,9 @@ class MLP_SR(nn.Module):
 
     def interpret(self, inputs, output_dim: int = None, parent_model=None, 
                  variable_transforms: Optional[List[Callable]] = None,
-                 variable_names: Optional[List[str]] = None, **kwargs):
+                 variable_names: Optional[List[str]] = None, 
+                 save_path: str = None,
+                 **kwargs):
         """
         Discover symbolic expressions that approximate the MLP's behavior.
         
@@ -179,12 +181,14 @@ class MLP_SR(nn.Module):
             variable_names (List[str], optional): Custom names for the transformed variables.
                                                 If provided, must match the length of variable_transforms.
                                                 Example: ["x0_minus_x1", "x2_squared"]
+            save_path (str, optional): Custom base directory for PySR outputs.
+                                     If None, uses default "SR_output/" directory.
+                                     Example: "/custom/output/path"
             **kwargs: Parameters passed to PySRRegressor. Defaults:
                 - binary_operators (list): ["+", "*"]
                 - unary_operators (list): ["inv(x) = 1/x", "sin", "exp"]
                 - niterations (int): 400
-                - output_directory (str): "SR_output/{mlp_name}" # Where PySR outputs are 
-                stored
+                - output_directory (str): "{save_path}/{mlp_name}" or "SR_output/{mlp_name}" # Where PySR outputs are stored
                 - run_id (str): "{timestamp}" # Where PySR outputs of a specific run 
                 are stored
             To see more information on the possible inputs to the PySRRegressor, please see
@@ -288,6 +292,9 @@ class MLP_SR(nn.Module):
         
                 run_id = f"dim{dim}_{timestamp}"
                 output_name = f"SR_output/{self.mlp_name}"
+
+                if save_path is not None:
+                    output_name = f"{save_path}/{self.mlp_name}"
                 
                 default_params = {
                     "binary_operators": ["+", "*"],
@@ -318,6 +325,9 @@ class MLP_SR(nn.Module):
 
             run_id = f"dim{output_dim}_{timestamp}"
             output_name = f"SR_output/{self.mlp_name}"
+
+            if save_path is not None:
+                output_name = f"{save_path}/{self.mlp_name}"
             
             default_params = {
                 "binary_operators": ["+", "*"],
