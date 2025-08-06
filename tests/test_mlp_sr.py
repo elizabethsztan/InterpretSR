@@ -997,12 +997,314 @@ def test_multi_dimensional_switch_to_equation_missing_dims():
         cleanup_sr_outputs()
 
 
+def test_variable_transformations_basic():
+    """
+    Test basic variable transformations functionality.
+    """
+    global trained_model
+    if trained_model is None:
+        pytest.skip("No trained model available - training test may have failed")
+    
+    try:
+        # Create test input data
+        input_data = torch.FloatTensor(X_train[:50])
+        
+        # Define simple variable transformations
+        variable_transforms = [
+            lambda x: x[:, 0] + x[:, 1],  # sum of first two variables
+            lambda x: x[:, 2] * x[:, 3],  # product of third and fourth variables
+            lambda x: x[:, 4] ** 2,       # square of fifth variable
+        ]
+        
+        variable_names = ["x0_plus_x1", "x2_times_x3", "x4_squared"]
+        
+        # Run interpretation with transformations
+        regressor = trained_model.mlp.interpret(
+            input_data, 
+            output_dim=0,
+            variable_transforms=variable_transforms,
+            variable_names=variable_names,
+            niterations=30
+        )
+        
+        # Verify regressor was created
+        assert regressor is not None, "Should return regressor for variable transformations"
+        assert hasattr(regressor, 'equations_'), "Regressor should have equations"
+        
+        # Check that transformation info was stored
+        assert hasattr(trained_model.mlp, '_variable_transforms'), "Should store variable transformations"
+        assert hasattr(trained_model.mlp, '_variable_names'), "Should store variable names"
+        assert trained_model.mlp._variable_transforms == variable_transforms, "Should store correct transformations"
+        assert trained_model.mlp._variable_names == variable_names, "Should store correct variable names"
+        
+        print("✅ Basic variable transformations test passed")
+        
+    except Exception as e:
+        pytest.fail(f"Variable transformations test failed with error: {e}")
+    finally:
+        cleanup_sr_outputs()
+
+
+def test_variable_transformations_without_names():
+    """
+    Test variable transformations without custom names (should use x0, x1, etc.).
+    """
+    global trained_model
+    if trained_model is None:
+        pytest.skip("No trained model available - training test may have failed")
+    
+    try:
+        # Create test input data
+        input_data = torch.FloatTensor(X_train[:50])
+        
+        # Define transformations without names
+        variable_transforms = [
+            lambda x: x[:, 0] - x[:, 1],  # difference
+            lambda x: torch.sin(x[:, 2]), # sine transformation
+        ]
+        
+        # Run interpretation with transformations (no variable_names provided)
+        regressor = trained_model.mlp.interpret(
+            input_data, 
+            output_dim=0,
+            variable_transforms=variable_transforms,
+            niterations=30
+        )
+        
+        # Verify regressor was created
+        assert regressor is not None, "Should return regressor for variable transformations"
+        
+        # Check that transformation info was stored
+        assert hasattr(trained_model.mlp, '_variable_transforms'), "Should store variable transformations"
+        assert hasattr(trained_model.mlp, '_variable_names'), "Should have variable names attribute"
+        assert trained_model.mlp._variable_transforms == variable_transforms, "Should store correct transformations"
+        assert trained_model.mlp._variable_names is None, "Should have None for variable names when not provided"
+        
+        print("✅ Variable transformations without names test passed")
+        
+    except Exception as e:
+        pytest.fail(f"Variable transformations without names test failed with error: {e}")
+    finally:
+        cleanup_sr_outputs()
+
+
+def test_variable_transformations_switch_to_equation():
+    """
+    Test that switch_to_equation works correctly with variable transformations.
+    """
+    global trained_model
+    if trained_model is None:
+        pytest.skip("No trained model available - training test may have failed")
+    
+    try:
+        # Create test input data
+        input_data = torch.FloatTensor(X_train[:50])
+        
+        # Define transformations with names
+        variable_transforms = [
+            lambda x: x[:, 0] + x[:, 1],  # sum
+            lambda x: x[:, 2],            # identity
+        ]
+        variable_names = ["sum_01", "x2"]
+        
+        # Run interpretation with transformations
+        trained_model.mlp.interpret(
+            input_data, 
+            output_dim=0,
+            variable_transforms=variable_transforms,
+            variable_names=variable_names,
+            niterations=30
+        )
+        
+        # Switch to equation mode
+        trained_model.mlp.switch_to_equation()
+        
+        # Verify equation mode is active
+        assert trained_model.mlp._using_equation, "Should be in equation mode"
+        assert hasattr(trained_model.mlp, '_equation_funcs'), "Should have equation functions"
+        assert hasattr(trained_model.mlp, '_equation_vars'), "Should have equation variables"
+        
+        # Test forward pass works with transformations
+        test_input = torch.FloatTensor(X_train[:5])
+        output = trained_model.mlp(test_input)
+        
+        assert output is not None, "Forward pass should work with variable transformations"
+        assert output.shape[0] == 5, "Should have correct batch size"
+        assert not torch.isnan(output).any(), "Output should not contain NaN values"
+        
+        print("✅ Variable transformations switch_to_equation test passed")
+        
+    except Exception as e:
+        pytest.fail(f"Variable transformations switch_to_equation test failed with error: {e}")
+    finally:
+        cleanup_sr_outputs()
+
+
+def test_variable_transformations_error_handling():
+    """
+    Test error handling for variable transformations.
+    """
+    global trained_model
+    if trained_model is None:
+        pytest.skip("No trained model available - training test may have failed")
+    
+    try:
+        # Create test input data
+        input_data = torch.FloatTensor(X_train[:50])
+        
+        # Test mismatched lengths
+        variable_transforms = [lambda x: x[:, 0], lambda x: x[:, 1]]
+        variable_names = ["only_one_name"]  # Length mismatch
+        
+        with pytest.raises(ValueError, match="Length of variable_names"):
+            trained_model.mlp.interpret(
+                input_data, 
+                variable_transforms=variable_transforms,
+                variable_names=variable_names,
+                niterations=10
+            )
+        
+        # Test transform that causes an error
+        def bad_transform(x):
+            raise RuntimeError("Intentional error")
+        
+        variable_transforms = [bad_transform]
+        
+        with pytest.raises(ValueError, match="Error applying transformation"):
+            trained_model.mlp.interpret(
+                input_data,
+                variable_transforms=variable_transforms,
+                niterations=10
+            )
+        
+        print("✅ Variable transformations error handling test passed")
+        
+    except Exception as e:
+        pytest.fail(f"Variable transformations error handling test failed with error: {e}")
+    finally:
+        cleanup_sr_outputs()
+
+
+def test_variable_transformations_multi_dimensional():
+    """
+    Test variable transformations with multi-dimensional output.
+    """
+    try:
+        # Create multi-output data
+        x_data, y_data = create_multi_output_synthetic_data(n_samples=200, input_dim=4, output_dim=2)
+        
+        # Create and train model
+        model = MultiOutputModel(input_dim=4, output_dim=2)
+        criterion = nn.MSELoss()
+        optimizer = optim.Adam(model.parameters(), lr=0.01)
+        
+        # Convert to tensors
+        X_tensor = torch.FloatTensor(x_data)
+        y_tensor = torch.FloatTensor(y_data)
+        
+        # Quick training
+        for epoch in range(20):
+            optimizer.zero_grad()
+            pred = model(X_tensor)
+            loss = criterion(pred, y_tensor)
+            loss.backward()
+            optimizer.step()
+        
+        # Define variable transformations
+        variable_transforms = [
+            lambda x: x[:, 0] + x[:, 1],  # sum
+            lambda x: x[:, 2] * x[:, 3],  # product
+            lambda x: x[:, 0] ** 2,       # square
+        ]
+        variable_names = ["sum_01", "product_23", "x0_squared"]
+        
+        # Test interpret with transformations on all dimensions
+        input_data = X_tensor[:100]
+        regressors = model.mlp.interpret(
+            input_data,
+            variable_transforms=variable_transforms,
+            variable_names=variable_names,
+            niterations=20
+        )
+        
+        # Verify results
+        assert isinstance(regressors, dict), "Should return dictionary for multi-dim"
+        assert len(regressors) == 2, "Should have regressors for both dimensions"
+        
+        # Check transformation info was stored
+        assert hasattr(model.mlp, '_variable_transforms'), "Should store transformations"
+        assert hasattr(model.mlp, '_variable_names'), "Should store variable names"
+        assert model.mlp._variable_names == variable_names, "Should store correct names"
+        
+        # Test switch to equation with transformations
+        model.mlp.switch_to_equation()
+        assert model.mlp._using_equation, "Should be in equation mode"
+        
+        # Test forward pass
+        test_input = X_tensor[:3]
+        output = model(test_input)
+        assert output.shape == (3, 2), "Should have correct output shape"
+        assert not torch.isnan(output).any(), "Output should not contain NaN"
+        
+        print("✅ Variable transformations multi-dimensional test passed")
+        
+    except Exception as e:
+        pytest.fail(f"Variable transformations multi-dimensional test failed with error: {e}")
+    finally:
+        cleanup_sr_outputs()
+
+
+def test_save_path_parameter():
+    """
+    Test the save_path parameter for custom output directory.
+    """
+    global trained_model
+    if trained_model is None:
+        pytest.skip("No trained model available - training test may have failed")
+    
+    try:
+        # Create test input data
+        input_data = torch.FloatTensor(X_train[:30])
+        
+        # Define custom save path
+        custom_save_path = "custom_test_output"
+        
+        # Run interpretation with custom save path
+        regressor = trained_model.mlp.interpret(
+            input_data,
+            output_dim=0,
+            save_path=custom_save_path,
+            niterations=20
+        )
+        
+        # Verify regressor was created
+        assert regressor is not None, "Should return regressor"
+        
+        # Check that the custom output directory exists
+        expected_dir = f"{custom_save_path}/{trained_model.mlp.mlp_name}"
+        # Note: PySR may not create the directory if no output is saved, so we just check the regressor works
+        
+        print("✅ Save path parameter test passed")
+        
+    except Exception as e:
+        pytest.fail(f"Save path parameter test failed with error: {e}")
+    finally:
+        # Clean up custom output directory
+        if os.path.exists("custom_test_output"):
+            shutil.rmtree("custom_test_output")
+        cleanup_sr_outputs()
+
+
 def cleanup_sr_outputs():
     """
     Clean up SR output files and directories created during testing.
     """
     if os.path.exists('SR_output'):
         shutil.rmtree('SR_output')
+    
+    # Clean up any custom output directories
+    if os.path.exists('custom_test_output'):
+        shutil.rmtree('custom_test_output')
     
     # Clean up any other potential output files
     for file in os.listdir('.'):

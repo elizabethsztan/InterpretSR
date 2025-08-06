@@ -679,10 +679,379 @@ def test_middle_mlp_interpret_and_switch():
                          torch.zeros(5, inactive_mask.sum()))
 
 
+def test_pruning_variable_transformations_basic():
+    """Test basic variable transformations functionality with Pruning_MLP."""
+    # Create and train a model
+    model = SimpleCompositeModel(input_dim=5, output_dim=1, output_dim_f=12)
+    model.f_net = Pruning_MLP(model.f_net, initial_dim=12, target_dim=4, mlp_name="f_net")
+    
+    # Train briefly
+    criterion = nn.MSELoss()
+    optimizer = optim.Adam(model.parameters(), lr=0.01)
+    dataset = TensorDataset(X_train_tensor, y_train_tensor)
+    dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
+    model, _ = train_model(model, dataloader, optimizer, criterion, epochs=5)
+    
+    # Prune to active dimensions
+    model.f_net.set_schedule(total_epochs=20, decay_rate='linear', end_epoch_frac=0.5)
+    sample_data = X_train_tensor[:50]
+    model.f_net.prune(10, sample_data, parent_model=model)
+    
+    active_dims = model.f_net.get_active_dimensions()
+    assert len(active_dims) == 4
+    
+    try:
+        # Define variable transformations
+        variable_transforms = [
+            lambda x: x[:, 0] + x[:, 1],  # sum of first two variables
+            lambda x: x[:, 2] * x[:, 3],  # product of third and fourth variables
+            lambda x: x[:, 4] ** 2,       # square of fifth variable
+        ]
+        variable_names = ["x0_plus_x1", "x2_times_x3", "x4_squared"]
+        
+        # Run interpretation with transformations
+        input_data = X_train_tensor[:80]
+        regressors = model.f_net.interpret(
+            input_data,
+            parent_model=model,
+            variable_transforms=variable_transforms,
+            variable_names=variable_names,
+            niterations=20
+        )
+        
+        # Should return dictionary with entries only for active dimensions
+        assert isinstance(regressors, dict)
+        assert len(regressors) == 4
+        assert set(regressors.keys()) == set(active_dims)
+        
+        # Check that transformation info was stored
+        assert hasattr(model.f_net, '_variable_transforms')
+        assert hasattr(model.f_net, '_variable_names')
+        assert model.f_net._variable_transforms == variable_transforms
+        assert model.f_net._variable_names == variable_names
+        
+        # Each regressor should be valid
+        for dim_idx, regressor in regressors.items():
+            assert regressor is not None
+            assert hasattr(regressor, 'equations_')
+            assert hasattr(regressor, 'get_best')
+            assert dim_idx in active_dims
+        
+        print("✅ Pruning variable transformations basic test passed")
+        
+    except Exception as e:
+        pytest.fail(f"Pruning variable transformations test failed with error: {e}")
+    finally:
+        cleanup_sr_outputs()
+
+
+def test_pruning_variable_transformations_switch_to_equation():
+    """Test that switch_to_equation works with variable transformations in Pruning_MLP."""
+    # Create and train a model
+    model = SimpleCompositeModel(input_dim=5, output_dim=1, output_dim_f=8)
+    model.f_net = Pruning_MLP(model.f_net, initial_dim=8, target_dim=3, mlp_name="f_net")
+    
+    # Train briefly
+    criterion = nn.MSELoss()
+    optimizer = optim.Adam(model.parameters(), lr=0.01)
+    dataset = TensorDataset(X_train_tensor, y_train_tensor)
+    dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
+    model, _ = train_model(model, dataloader, optimizer, criterion, epochs=3)
+    
+    # Prune to active dimensions
+    model.f_net.set_schedule(total_epochs=10, decay_rate='linear', end_epoch_frac=0.5)
+    sample_data = X_train_tensor[:30]
+    model.f_net.prune(5, sample_data, parent_model=model)
+    
+    active_dims = model.f_net.get_active_dimensions()
+    assert len(active_dims) == 3
+    
+    try:
+        # Define transformations with names
+        variable_transforms = [
+            lambda x: x[:, 0] + x[:, 1],  # sum
+            lambda x: x[:, 2],            # identity
+        ]
+        variable_names = ["sum_01", "x2"]
+        
+        # Run interpretation with transformations
+        input_data = X_train_tensor[:50]
+        regressors = model.f_net.interpret(
+            input_data,
+            parent_model=model,
+            variable_transforms=variable_transforms,
+            variable_names=variable_names,
+            niterations=15
+        )
+        
+        assert len(regressors) == 3
+        
+        # Switch to equation mode
+        model.f_net.switch_to_equation()
+        
+        # Verify equation mode is active
+        assert model.f_net._using_equation
+        assert hasattr(model.f_net, '_equation_funcs')
+        assert hasattr(model.f_net, '_equation_vars')
+        
+        # Should have equations only for active dimensions
+        assert len(model.f_net._equation_funcs) == 3
+        assert set(model.f_net._equation_funcs.keys()) == set(active_dims)
+        
+        # Test forward pass works with transformations
+        test_input = X_train_tensor[:5]
+        output = model.f_net(test_input)
+        
+        # Should have correct shape with inactive dimensions as zeros
+        assert output.shape == (5, 8)
+        
+        # Inactive dimensions should be zero
+        inactive_mask = ~model.f_net.pruning_mask
+        assert torch.allclose(output[:, inactive_mask], torch.zeros(5, inactive_mask.sum()))
+        
+        # Active dimensions should have non-zero values
+        active_mask = model.f_net.pruning_mask
+        active_outputs = output[:, active_mask]
+        assert not torch.allclose(active_outputs, torch.zeros_like(active_outputs))
+        
+        print("✅ Pruning variable transformations switch_to_equation test passed")
+        
+    except Exception as e:
+        pytest.fail(f"Pruning variable transformations switch_to_equation test failed with error: {e}")
+    finally:
+        cleanup_sr_outputs()
+
+
+def test_pruning_variable_transformations_specific_dimension():
+    """Test variable transformations with specific output dimension in Pruning_MLP."""
+    # Create and train a model
+    model = SimpleCompositeModel(input_dim=5, output_dim=1, output_dim_f=10)
+    model.f_net = Pruning_MLP(model.f_net, initial_dim=10, target_dim=3, mlp_name="f_net")
+    
+    # Train briefly
+    criterion = nn.MSELoss()
+    optimizer = optim.Adam(model.parameters(), lr=0.01)
+    dataset = TensorDataset(X_train_tensor, y_train_tensor)
+    dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
+    model, _ = train_model(model, dataloader, optimizer, criterion, epochs=4)
+    
+    # Prune to active dimensions
+    model.f_net.set_schedule(total_epochs=15, decay_rate='linear', end_epoch_frac=0.6)
+    sample_data = X_train_tensor[:40]
+    model.f_net.prune(9, sample_data, parent_model=model)
+    
+    active_dims = model.f_net.get_active_dimensions()
+    assert len(active_dims) == 3
+    
+    try:
+        # Define transformations
+        variable_transforms = [
+            lambda x: x[:, 0] - x[:, 1],  # difference
+            lambda x: torch.sin(x[:, 2]), # sine transformation
+            lambda x: x[:, 3] * x[:, 4],  # product
+        ]
+        variable_names = ["x0_minus_x1", "sin_x2", "x3_times_x4"]
+        
+        # Run interpretation with transformations on specific active dimension
+        input_data = X_train_tensor[:60]
+        target_dim = active_dims[1]  # Pick one active dimension
+        
+        regressor = model.f_net.interpret(
+            input_data,
+            parent_model=model,
+            output_dim=target_dim,
+            variable_transforms=variable_transforms,
+            variable_names=variable_names,
+            niterations=15
+        )
+        
+        # Should return single regressor (not a dictionary)
+        assert not isinstance(regressor, dict)
+        assert regressor is not None
+        assert hasattr(regressor, 'equations_')
+        assert hasattr(regressor, 'get_best')
+        
+        # Check that transformation info was stored
+        assert hasattr(model.f_net, '_variable_transforms')
+        assert hasattr(model.f_net, '_variable_names')
+        assert model.f_net._variable_names == variable_names
+        
+        # Verify the regressor is stored correctly
+        assert hasattr(model.f_net, 'pysr_regressor')
+        assert target_dim in model.f_net.pysr_regressor
+        assert model.f_net.pysr_regressor[target_dim] is regressor
+        
+        print("✅ Pruning variable transformations specific dimension test passed")
+        
+    except Exception as e:
+        pytest.fail(f"Pruning variable transformations specific dimension test failed with error: {e}")
+    finally:
+        cleanup_sr_outputs()
+
+
+def test_pruning_variable_transformations_error_handling():
+    """Test error handling for variable transformations with Pruning_MLP."""
+    # Create a simple model
+    model = SimpleCompositeModel(input_dim=5, output_dim=1, output_dim_f=6)
+    model.f_net = Pruning_MLP(model.f_net, initial_dim=6, target_dim=2, mlp_name="f_net")
+    
+    # Train briefly
+    criterion = nn.MSELoss()
+    optimizer = optim.Adam(model.parameters(), lr=0.01)
+    dataset = TensorDataset(X_train_tensor, y_train_tensor)
+    dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
+    model, _ = train_model(model, dataloader, optimizer, criterion, epochs=2)
+    
+    try:
+        # Create test input data
+        input_data = X_train_tensor[:30]
+        
+        # Test mismatched lengths
+        variable_transforms = [lambda x: x[:, 0], lambda x: x[:, 1]]
+        variable_names = ["only_one_name"]  # Length mismatch
+        
+        with pytest.raises(ValueError, match="Length of variable_names"):
+            model.f_net.interpret(
+                input_data,
+                parent_model=model,
+                variable_transforms=variable_transforms,
+                variable_names=variable_names,
+                niterations=10
+            )
+        
+        # Test transform that causes an error
+        def bad_transform(x):
+            raise RuntimeError("Intentional error")
+        
+        variable_transforms = [bad_transform]
+        
+        with pytest.raises(ValueError, match="Error applying transformation"):
+            model.f_net.interpret(
+                input_data,
+                parent_model=model,
+                variable_transforms=variable_transforms,
+                niterations=10
+            )
+        
+        print("✅ Pruning variable transformations error handling test passed")
+        
+    except Exception as e:
+        pytest.fail(f"Pruning variable transformations error handling test failed with error: {e}")
+    finally:
+        cleanup_sr_outputs()
+
+
+def test_pruning_save_path_parameter():
+    """Test the save_path parameter for custom output directory with Pruning_MLP."""
+    # Create and train a model
+    model = SimpleCompositeModel(input_dim=5, output_dim=1, output_dim_f=8)
+    model.f_net = Pruning_MLP(model.f_net, initial_dim=8, target_dim=3, mlp_name="f_net")
+    
+    # Train briefly
+    criterion = nn.MSELoss()
+    optimizer = optim.Adam(model.parameters(), lr=0.01)
+    dataset = TensorDataset(X_train_tensor, y_train_tensor)
+    dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
+    model, _ = train_model(model, dataloader, optimizer, criterion, epochs=3)
+    
+    # Prune to active dimensions
+    model.f_net.set_schedule(total_epochs=10, decay_rate='linear', end_epoch_frac=0.5)
+    sample_data = X_train_tensor[:30]
+    model.f_net.prune(5, sample_data, parent_model=model)
+    
+    try:
+        # Define custom save path
+        custom_save_path = "custom_pruning_output"
+        
+        # Run interpretation with custom save path
+        input_data = X_train_tensor[:50]
+        regressors = model.f_net.interpret(
+            input_data,
+            parent_model=model,
+            save_path=custom_save_path,
+            niterations=15
+        )
+        
+        # Verify regressors were created
+        assert isinstance(regressors, dict)
+        assert len(regressors) > 0  # Should have regressors for active dimensions
+        
+        for regressor in regressors.values():
+            assert regressor is not None
+            assert hasattr(regressor, 'equations_')
+        
+        print("✅ Pruning save path parameter test passed")
+        
+    except Exception as e:
+        pytest.fail(f"Pruning save path parameter test failed with error: {e}")
+    finally:
+        # Clean up custom output directory
+        if os.path.exists("custom_pruning_output"):
+            shutil.rmtree("custom_pruning_output")
+        cleanup_sr_outputs()
+
+
+def test_pruning_variable_transformations_inactive_dimension_request():
+    """Test requesting symbolic regression on inactive dimension with transformations."""
+    # Create and train a model
+    model = SimpleCompositeModel(input_dim=5, output_dim=1, output_dim_f=8)
+    model.f_net = Pruning_MLP(model.f_net, initial_dim=8, target_dim=3, mlp_name="f_net")
+    
+    # Train briefly
+    criterion = nn.MSELoss()
+    optimizer = optim.Adam(model.parameters(), lr=0.01)
+    dataset = TensorDataset(X_train_tensor, y_train_tensor)
+    dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
+    model, _ = train_model(model, dataloader, optimizer, criterion, epochs=3)
+    
+    # Prune to active dimensions
+    model.f_net.set_schedule(total_epochs=10, decay_rate='linear', end_epoch_frac=0.5)
+    sample_data = X_train_tensor[:30]
+    model.f_net.prune(5, sample_data, parent_model=model)
+    
+    active_dims = model.f_net.get_active_dimensions()
+    assert len(active_dims) == 3
+    
+    # Find an inactive dimension
+    all_dims = set(range(8))
+    inactive_dims = all_dims - set(active_dims)
+    inactive_dim = list(inactive_dims)[0]
+    
+    try:
+        # Define transformations
+        variable_transforms = [lambda x: x[:, 0], lambda x: x[:, 1]]
+        variable_names = ["x0", "x1"]
+        
+        # Try to run interpretation on inactive dimension
+        input_data = X_train_tensor[:40]
+        result = model.f_net.interpret(
+            input_data,
+            parent_model=model,
+            output_dim=inactive_dim,
+            variable_transforms=variable_transforms,
+            variable_names=variable_names,
+            niterations=10
+        )
+        
+        # Should return empty dict for inactive dimension
+        assert result == {}
+        
+        print("✅ Pruning inactive dimension request test passed")
+        
+    except Exception as e:
+        pytest.fail(f"Pruning inactive dimension request test failed with error: {e}")
+    finally:
+        cleanup_sr_outputs()
+
+
 def cleanup_sr_outputs():
     """Clean up SR output files and directories created during testing."""
     if os.path.exists('SR_output'):
         shutil.rmtree('SR_output')
+    
+    # Clean up any custom output directories
+    if os.path.exists('custom_pruning_output'):
+        shutil.rmtree('custom_pruning_output')
     
     # Clean up any other potential output files
     for file in os.listdir('.'):
