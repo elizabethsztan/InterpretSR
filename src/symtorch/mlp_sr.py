@@ -306,14 +306,14 @@ class MLP_SR(nn.Module):
                     "run_id": run_id
                 }
                 
-                # Add variable names if provided
-                if variable_names is not None:
-                    default_params["variable_names"] = variable_names
                 
                 params = {**default_params, **kwargs}
                 regressor = PySRRegressor(**params)
 
-                regressor.fit(actual_inputs_numpy, output.detach()[:, dim].cpu().numpy())
+                if variable_names is not None:
+                    regressor.fit(actual_inputs_numpy, output.detach()[:, dim].cpu().numpy(), variable_names=variable_names)
+                else:
+                    regressor.fit(actual_inputs_numpy, output.detach()[:, dim].cpu().numpy())
 
                 pysr_regressors[dim] = regressor
 
@@ -338,15 +338,14 @@ class MLP_SR(nn.Module):
                 "output_directory": output_name,
                 "run_id": run_id
             }
-            
-            # Add variable names if provided
-            if variable_names is not None:
-                default_params["variable_names"] = variable_names
                 
             params = {**default_params, **kwargs}
             regressor = PySRRegressor(**params)
 
-            regressor.fit(actual_inputs_numpy, output.detach()[:, output_dim].cpu().numpy())
+            if variable_names is not None:
+                regressor.fit(actual_inputs_numpy, output.detach()[:, output_dim].cpu().numpy(), variable_names=variable_names)
+            else:
+                regressor.fit(actual_inputs_numpy, output.detach()[:, output_dim].cpu().numpy())
             pysr_regressors[output_dim] = regressor
 
             print(f"💡Best equation for output {output_dim} found to be {regressor.get_best()['equation']}.")
