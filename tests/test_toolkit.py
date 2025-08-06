@@ -500,6 +500,185 @@ def test_pruning_schedule_validation():
     assert pruning_mlp.pruning_schedule[9] == 5  # Should be 5 due to discretization
 
 
+class CompositeModelWithMiddleMLP(nn.Module):
+    """
+    Composite model where MLP is in the middle - between encoder and decoder.
+    This tests pruning functionality for MLPs that are not at the beginning.
+    """
+    def __init__(self, input_dim, output_dim, encoder_dim=16, middle_dim=24, decoder_dim=12):
+        super(CompositeModelWithMiddleMLP, self).__init__()
+        # Encoder: input -> encoder features
+        self.encoder = nn.Sequential(
+            nn.Linear(input_dim, encoder_dim),
+            nn.ReLU(),
+            nn.Linear(encoder_dim, encoder_dim)
+        )
+        
+        # Middle MLP: encoder features -> middle features (this will be wrapped with Pruning_MLP)
+        self.middle_mlp = nn.Sequential(
+            nn.Linear(encoder_dim, middle_dim),
+            nn.ReLU(),
+            nn.Linear(middle_dim, middle_dim)
+        )
+        
+        # Decoder: middle features -> output
+        self.decoder = nn.Sequential(
+            nn.Linear(middle_dim, decoder_dim),
+            nn.ReLU(),
+            nn.Linear(decoder_dim, output_dim)
+        )
+    
+    def forward(self, x):
+        x = self.encoder(x)
+        x = self.middle_mlp(x)
+        x = self.decoder(x)
+        return x
+
+
+def test_pruning_mlp_in_middle_of_model():
+    """Test pruning functionality when MLP is in the middle of a composite model."""
+    # Create model with MLP in the middle
+    model = CompositeModelWithMiddleMLP(input_dim=5, output_dim=1, 
+                                       encoder_dim=16, middle_dim=20, decoder_dim=12)
+    
+    # Wrap the middle MLP with Pruning_MLP
+    model.middle_mlp = Pruning_MLP(model.middle_mlp, initial_dim=20, target_dim=6, 
+                                  mlp_name="middle_mlp")
+    
+    # Set up pruning schedule
+    model.middle_mlp.set_schedule(total_epochs=40, decay_rate='cosine', end_epoch_frac=0.6)
+    
+    # Train the model briefly to develop feature importance
+    criterion = nn.MSELoss()
+    optimizer = optim.Adam(model.parameters(), lr=0.01)
+    dataset = TensorDataset(X_train_tensor, y_train_tensor)
+    dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
+    
+    # Train for a few epochs
+    model, _ = train_model(model, dataloader, optimizer, criterion, epochs=8)
+    
+    # Initially should have all 20 dimensions
+    assert model.middle_mlp.current_dim == 20
+    assert model.middle_mlp.pruning_mask.sum().item() == 20
+    
+    # Test pruning at various epochs
+    sample_data = X_train_tensor[:50]
+    
+    # Prune at epoch 10 (should be in pruning phase)
+    model.middle_mlp.prune(10, sample_data, parent_model=model)
+    
+    # Should have fewer dimensions now
+    assert model.middle_mlp.current_dim < 20
+    assert model.middle_mlp.current_dim >= 6
+    assert model.middle_mlp.pruning_mask.sum().item() == model.middle_mlp.current_dim
+    
+    # Prune at epoch 24 (should be at target dimensions)
+    model.middle_mlp.prune(24, sample_data, parent_model=model)
+    
+    # Should be at target dimension
+    assert model.middle_mlp.current_dim == 6
+    assert model.middle_mlp.pruning_mask.sum().item() == 6
+    
+    # Test that full model still works after pruning
+    test_input = X_test_tensor[:10]
+    output = model(test_input)
+    assert output.shape == (10, 1)
+    assert not torch.isnan(output).any()
+    
+    # Test that the middle MLP forward pass respects pruning
+    middle_output = model.middle_mlp(model.encoder(test_input))
+    assert middle_output.shape == (10, 20)  # Still full dimensionality
+    
+    # Check that inactive dimensions are zero
+    inactive_mask = ~model.middle_mlp.pruning_mask
+    assert torch.allclose(middle_output[:, inactive_mask], 
+                         torch.zeros(10, inactive_mask.sum()))
+    
+    # Check that active dimensions are non-zero
+    active_mask = model.middle_mlp.pruning_mask
+    active_outputs = middle_output[:, active_mask]
+    assert not torch.allclose(active_outputs, torch.zeros_like(active_outputs))
+
+
+def test_middle_mlp_interpret_and_switch():
+    """Test interpret and equation switching for middle MLP in composite model."""
+    # Create model with middle MLP
+    model = CompositeModelWithMiddleMLP(input_dim=5, output_dim=1, 
+                                       encoder_dim=10, middle_dim=16, decoder_dim=8)
+    
+    model.middle_mlp = Pruning_MLP(model.middle_mlp, initial_dim=16, target_dim=4, 
+                                  mlp_name="middle_mlp")
+    
+    # Train briefly
+    criterion = nn.MSELoss()
+    optimizer = optim.Adam(model.parameters(), lr=0.01)
+    dataset = TensorDataset(X_train_tensor, y_train_tensor)
+    dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
+    model, _ = train_model(model, dataloader, optimizer, criterion, epochs=5)
+    
+    # Prune to target dimensions
+    model.middle_mlp.set_schedule(total_epochs=20, decay_rate='linear', end_epoch_frac=0.5)
+    sample_data = X_train_tensor[:40]
+    model.middle_mlp.prune(10, sample_data, parent_model=model)
+    
+    # Should have 4 active dimensions
+    active_dims = model.middle_mlp.get_active_dimensions()
+    assert len(active_dims) == 4
+    
+    # Run interpret on the middle MLP - should work with parent_model
+    input_data = X_train_tensor[:60]
+    regressors = model.middle_mlp.interpret(input_data, parent_model=model, niterations=15)
+    
+    # Should have regressors for active dimensions only
+    assert isinstance(regressors, dict)
+    assert len(regressors) == 4
+    assert set(regressors.keys()) == set(active_dims)
+    
+    # Each regressor should be valid
+    for dim_idx, regressor in regressors.items():
+        assert regressor is not None
+        assert hasattr(regressor, 'equations_')
+        assert dim_idx in active_dims
+    
+    # Test switch to equation mode
+    model.middle_mlp.switch_to_equation()
+    
+    # Should be in equation mode
+    assert hasattr(model.middle_mlp, '_using_equation')
+    assert model.middle_mlp._using_equation
+    assert len(model.middle_mlp._equation_funcs) == 4
+    
+    # Test forward pass in equation mode
+    test_input = X_train_tensor[:5]
+    
+    # Get original MLP output for comparison
+    model.middle_mlp.switch_to_mlp()
+    mlp_output = model(test_input).clone().detach()
+    
+    # Switch back to equation and test
+    model.middle_mlp.switch_to_equation()
+    equation_output = model(test_input)
+    
+    # Both should have same shape and be finite
+    assert mlp_output.shape == equation_output.shape == (5, 1)
+    assert torch.isfinite(mlp_output).all()
+    assert torch.isfinite(equation_output).all()
+    
+    # The middle MLP outputs should respect pruning in both modes
+    model.middle_mlp.switch_to_mlp()
+    middle_mlp_output = model.middle_mlp(model.encoder(test_input))
+    
+    model.middle_mlp.switch_to_equation()  
+    middle_eq_output = model.middle_mlp(model.encoder(test_input))
+    
+    # Both should have inactive dimensions as zeros
+    inactive_mask = ~model.middle_mlp.pruning_mask
+    assert torch.allclose(middle_mlp_output[:, inactive_mask], 
+                         torch.zeros(5, inactive_mask.sum()))
+    assert torch.allclose(middle_eq_output[:, inactive_mask], 
+                         torch.zeros(5, inactive_mask.sum()))
+
+
 def cleanup_sr_outputs():
     """Clean up SR output files and directories created during testing."""
     if os.path.exists('SR_output'):
