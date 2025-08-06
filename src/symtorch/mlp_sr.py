@@ -11,6 +11,8 @@ import torch.nn as nn
 import time
 import sympy
 from sympy import lambdify
+import numpy as np
+from typing import List, Callable, Optional, Union
 
 class MLP_SR(nn.Module):
     """
@@ -114,11 +116,24 @@ class MLP_SR(nn.Module):
                 
                 # Extract variables needed for this dimension
                 selected_inputs = []
-                for idx in var_indices:
-                    if idx < x.shape[1]:
-                        selected_inputs.append(x[:, idx])
-                    else:
-                        raise ValueError(f"Equation for dimension {dim} requires variable x{idx} but input only has {x.shape[1]} dimensions")
+                
+                if hasattr(self, '_variable_transforms') and self._variable_transforms is not None:
+                    # Apply transformations and select needed variables
+                    for idx in var_indices:
+                        if idx < len(self._variable_transforms):
+                            transformed_var = self._variable_transforms[idx](x)
+                            if transformed_var.dim() > 1:
+                                transformed_var = transformed_var.flatten()
+                            selected_inputs.append(transformed_var)
+                        else:
+                            raise ValueError(f"Equation for dimension {dim} requires transform {idx} but only {len(self._variable_transforms)} transforms available")
+                else:
+                    # Original behavior - extract by column index
+                    for idx in var_indices:
+                        if idx < x.shape[1]:
+                            selected_inputs.append(x[:, idx])
+                        else:
+                            raise ValueError(f"Equation for dimension {dim} requires variable x{idx} but input only has {x.shape[1]} dimensions")
                 
                 # Convert to numpy for the equation function
                 numpy_inputs = [inp.detach().cpu().numpy() for inp in selected_inputs]
@@ -144,7 +159,9 @@ class MLP_SR(nn.Module):
         else:
             return self.InterpretSR_MLP(x)
 
-    def interpret(self, inputs, output_dim: int = None, parent_model=None, **kwargs):
+    def interpret(self, inputs, output_dim: int = None, parent_model=None, 
+                 variable_transforms: Optional[List[Callable]] = None,
+                 variable_names: Optional[List[str]] = None, **kwargs):
         """
         Discover symbolic expressions that approximate the MLP's behavior.
         
@@ -156,6 +173,12 @@ class MLP_SR(nn.Module):
             parent_model (nn.Module, optional): The parent model containing this MLP_SR instance.
                                               If provided, will trace intermediate activations to get
                                               the actual inputs/outputs at this layer level.
+            variable_transforms (List[Callable], optional): List of functions to transform input variables.
+                                                           Each function should take the full input tensor and return
+                                                           a transformed tensor. Example: [lambda x: x[:, 0] - x[:, 1], lambda x: x[:, 2]**2]
+            variable_names (List[str], optional): Custom names for the transformed variables.
+                                                If provided, must match the length of variable_transforms.
+                                                Example: ["x0_minus_x1", "x2_squared"]
             **kwargs: Parameters passed to PySRRegressor. Defaults:
                 - binary_operators (list): ["+", "*"]
                 - unary_operators (list): ["inv(x) = 1/x", "sin", "exp"]
@@ -171,8 +194,14 @@ class MLP_SR(nn.Module):
             PySRRegressor: Fitted symbolic regression model
             
         Example:
+            >>> # Basic usage
             >>> regressor = model.interpret(train_inputs, niterations=1000)
             >>> print(regressor.get_best()['equation'])
+            
+            >>> # With variable transformations
+            >>> transforms = [lambda x: x[:, 0] - x[:, 1], lambda x: x[:, 2]**2, lambda x: torch.sin(x[:, 3])]
+            >>> names = ["x0_minus_x1", "x2_squared", "sin_x3"]
+            >>> regressor = model.interpret(train_inputs, variable_transforms=transforms, variable_names=names)
         """
 
         # Extract inputs and outputs at this layer level
@@ -210,6 +239,40 @@ class MLP_SR(nn.Module):
             with torch.no_grad():
                 output = self.InterpretSR_MLP(inputs)
 
+        # Apply variable transformations if provided
+        if variable_transforms is not None:
+            # Validate inputs
+            if variable_names is not None and len(variable_names) != len(variable_transforms):
+                raise ValueError(f"Length of variable_names ({len(variable_names)}) must match length of variable_transforms ({len(variable_transforms)})")
+            
+            # Apply transformations
+            transformed_inputs = []
+            for i, transform_func in enumerate(variable_transforms):
+                try:
+                    transformed_var = transform_func(actual_inputs)
+                    # Ensure the result is 1D (batch_size,)
+                    if transformed_var.dim() > 1:
+                        transformed_var = transformed_var.flatten()
+                    transformed_inputs.append(transformed_var.detach().cpu().numpy())
+                except Exception as e:
+                    raise ValueError(f"Error applying transformation {i}: {e}")
+            
+            # Stack transformed variables into input matrix
+            actual_inputs_numpy = np.column_stack(transformed_inputs)
+            
+            # Store transformation info for later use in switch_to_equation
+            self._variable_transforms = variable_transforms
+            self._variable_names = variable_names
+            
+            print(f"🔄 Applied {len(variable_transforms)} variable transformations")
+            if variable_names:
+                print(f"   Variable names: {variable_names}")
+        else:
+            # Use original inputs
+            actual_inputs_numpy = actual_inputs.detach().cpu().numpy()
+            self._variable_transforms = None
+            self._variable_names = None
+
         timestamp = int(time.time())
 
         output_dims = output.shape[1] # Number of output dimensions
@@ -235,10 +298,15 @@ class MLP_SR(nn.Module):
                     "output_directory": output_name,
                     "run_id": run_id
                 }
+                
+                # Add variable names if provided
+                if variable_names is not None:
+                    default_params["variable_names"] = variable_names
+                
                 params = {**default_params, **kwargs}
                 regressor = PySRRegressor(**params)
 
-                regressor.fit(actual_inputs.detach(), output.detach()[:, dim])
+                regressor.fit(actual_inputs_numpy, output.detach()[:, dim].cpu().numpy())
 
                 pysr_regressors[dim] = regressor
 
@@ -260,10 +328,15 @@ class MLP_SR(nn.Module):
                 "output_directory": output_name,
                 "run_id": run_id
             }
+            
+            # Add variable names if provided
+            if variable_names is not None:
+                default_params["variable_names"] = variable_names
+                
             params = {**default_params, **kwargs}
             regressor = PySRRegressor(**params)
 
-            regressor.fit(actual_inputs.detach(), output.detach()[:, output_dim])
+            regressor.fit(actual_inputs_numpy, output.detach()[:, output_dim].cpu().numpy())
             pysr_regressors[output_dim] = regressor
 
             print(f"💡Best equation for output {output_dim} found to be {regressor.get_best()['equation']}.")
@@ -386,20 +459,47 @@ class MLP_SR(nn.Module):
                 
             f, vars_sorted = result
             
-            # Convert variable names to indices (e.g., 'x0' -> 0, 'x4' -> 4)
-            var_indices = []
-            for var in vars_sorted:
-                var_str = str(var)
-                if var_str.startswith('x'):
-                    try:
-                        idx = int(var_str[1:])
-                        var_indices.append(idx)
-                    except ValueError:
-                        print(f"⚠️ Warning: Could not parse variable {var_str} for dimension {dim}")
+            # Handle variable indices based on whether transformations were used
+            if hasattr(self, '_variable_transforms') and self._variable_transforms is not None:
+                # With transformations, variables are named by custom names or transform indices
+                var_indices = []
+                for var in vars_sorted:
+                    var_str = str(var)
+                    if self._variable_names:
+                        # Find the index based on custom variable names
+                        try:
+                            idx = self._variable_names.index(var_str)
+                            var_indices.append(idx)
+                        except ValueError:
+                            print(f"⚠️ Warning: Variable {var_str} not found in variable_names for dimension {dim}")
+                            return
+                    else:
+                        # Variables named as x0, x1, etc. based on transform index
+                        if var_str.startswith('x'):
+                            try:
+                                idx = int(var_str[1:])
+                                var_indices.append(idx)
+                            except ValueError:
+                                print(f"⚠️ Warning: Could not parse variable {var_str} for dimension {dim}")
+                                return
+                        else:
+                            print(f"⚠️ Warning: Unexpected variable format {var_str} for dimension {dim}")
+                            return
+            else:
+                # Original behavior for non-transformed variables
+                var_indices = []
+                for var in vars_sorted:
+                    var_str = str(var)
+                    if var_str.startswith('x'):
+                        try:
+                            idx = int(var_str[1:])
+                            var_indices.append(idx)
+                        except ValueError:
+                            print(f"⚠️ Warning: Could not parse variable {var_str} for dimension {dim}")
+                            return
+                    else:
+                        print(f"⚠️ Warning: Unexpected variable format {var_str} for dimension {dim}")
                         return
-                else:
-                    print(f"⚠️ Warning: Unexpected variable format {var_str} for dimension {dim}")
-                    return
             
             equation_funcs[dim] = f
             equation_vars[dim] = var_indices
@@ -421,7 +521,21 @@ class MLP_SR(nn.Module):
         print(f"✅ Successfully switched {self.mlp_name} to symbolic equations for all {self.output_dims} dimensions:")
         for dim in range(self.output_dims):
             print(f"   Dimension {dim}: {equation_strs[dim]}")
-            print(f"   Variables: {[f'x{i}' for i in equation_vars[dim]]}")
+            
+            # Display variable names properly
+            var_names_display = []
+            if hasattr(self, '_variable_names') and self._variable_names is not None:
+                # Use custom variable names
+                for idx in equation_vars[dim]:
+                    if idx < len(self._variable_names):
+                        var_names_display.append(self._variable_names[idx])
+                    else:
+                        var_names_display.append(f"transform_{idx}")
+            else:
+                # Use default x0, x1, etc. format
+                var_names_display = [f'x{i}' for i in equation_vars[dim]]
+            
+            print(f"   Variables: {var_names_display}")
         
         print(f"🎯 All {self.output_dims} output dimensions now using symbolic equations.")
    
