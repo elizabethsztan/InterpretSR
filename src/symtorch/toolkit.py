@@ -4,7 +4,8 @@ import torch
 import torch.nn as nn
 import math
 import time
-from typing import Optional, Dict, Any
+import numpy as np
+from typing import Optional, Dict, Any, List, Callable
 from pysr import PySRRegressor
 from .mlp_sr import MLP_SR
 
@@ -244,7 +245,11 @@ class Pruning_MLP(MLP_SR):
         """
         return torch.where(self.pruning_mask)[0].tolist()
 
-    def interpret(self, sample_data, parent_model=None, **pysr_kwargs):
+    def interpret(self, inputs, output_dim: int = None, parent_model=None, 
+                 variable_transforms: Optional[List[Callable]] = None,
+                 variable_names: Optional[List[str]] = None, 
+                 save_path: str = None,
+                 **kwargs):
         """
         Discover symbolic expressions for active (non-pruned) dimensions only.
         
@@ -252,24 +257,40 @@ class Pruning_MLP(MLP_SR):
         that survived the pruning process, ignoring inactive/masked dimensions.
         
         Args:
-            sample_data (torch.Tensor): Input data for symbolic regression fitting.
+            inputs (torch.Tensor): Input data for symbolic regression fitting
+            output_dim(int, optional): The output dimension to run PySR on. If None, PySR run on all active outputs. Default: None.
             parent_model (nn.Module, optional): The parent model containing this Pruning_MLP instance.
                                               If provided, will trace intermediate activations to get
                                               the actual inputs/outputs at this layer level.
-            **pysr_kwargs: Parameters passed to PySRRegressor. Inherits same defaults as MLP_SR:
+            variable_transforms (List[Callable], optional): List of functions to transform input variables.
+                                                           Each function should take the full input tensor and return
+                                                           a transformed tensor. Example: [lambda x: x[:, 0] - x[:, 1], lambda x: x[:, 2]**2]
+            variable_names (List[str], optional): Custom names for the transformed variables.
+                                                If provided, must match the length of variable_transforms.
+                                                Example: ["x0_minus_x1", "x2_squared"]
+            save_path (str, optional): Custom base directory for PySR outputs.
+                                     If None, uses default "SR_output/" directory.
+                                     Example: "/custom/output/path"
+            **kwargs: Parameters passed to PySRRegressor. Inherits same defaults as MLP_SR:
                 - binary_operators (list): ["+", "*"]
                 - unary_operators (list): ["inv(x) = 1/x", "sin", "exp"]
                 - niterations (int): 400
-                - output_directory (str): "SR_output/{mlp_name}"
+                - output_directory (str): "{save_path}/{mlp_name}" or "SR_output/{mlp_name}"
                 - run_id (str): "dim{dim_idx}_{timestamp}"
                 
         Returns:
             dict: Dictionary mapping active dimension indices to fitted PySRRegressor objects
             
         Example:
+            >>> # Basic usage
             >>> regressors = pruned_mlp.interpret(train_data, niterations=1000)
             >>> for dim_idx, regressor in regressors.items():
             ...     print(f"Dimension {dim_idx}: {regressor.get_best()['equation']}")
+            
+            >>> # With variable transformations
+            >>> transforms = [lambda x: x[:, 0] - x[:, 1], lambda x: x[:, 2]**2, lambda x: torch.sin(x[:, 3])]
+            >>> names = ["x0_minus_x1", "x2_squared", "sin_x3"]
+            >>> regressors = pruned_mlp.interpret(train_data, variable_transforms=transforms, variable_names=names)
         """
         active_dims = self.get_active_dimensions()
         if not active_dims:
@@ -293,14 +314,14 @@ class Pruning_MLP(MLP_SR):
             # Run parent model to capture intermediate activations
             parent_model.eval()
             with torch.no_grad():
-                _ = parent_model(sample_data)
+                _ = parent_model(inputs)
             
             # Remove hook
             hook.remove()
             
             # Use captured intermediate data
             if layer_inputs and layer_outputs:
-                inputs = layer_inputs[0]
+                actual_inputs = layer_inputs[0]
                 full_output = layer_outputs[0]
                 active_output = full_output[:, self.pruning_mask]
             else:
@@ -309,45 +330,128 @@ class Pruning_MLP(MLP_SR):
             # Original behavior - extract inputs and outputs for active dimensions only
             self.InterpretSR_MLP.eval()
             with torch.no_grad():
-                inputs = sample_data.detach()
-                full_output = self.InterpretSR_MLP(sample_data)
+                actual_inputs = inputs.detach()
+                full_output = self.InterpretSR_MLP(inputs)
                 active_output = full_output[:, self.pruning_mask]
+
+        # Apply variable transformations if provided
+        if variable_transforms is not None:
+            # Validate inputs
+            if variable_names is not None and len(variable_names) != len(variable_transforms):
+                raise ValueError(f"Length of variable_names ({len(variable_names)}) must match length of variable_transforms ({len(variable_transforms)})")
+            
+            # Apply transformations
+            transformed_inputs = []
+            for i, transform_func in enumerate(variable_transforms):
+                try:
+                    transformed_var = transform_func(actual_inputs)
+                    # Ensure the result is 1D (batch_size,)
+                    if transformed_var.dim() > 1:
+                        transformed_var = transformed_var.flatten()
+                    transformed_inputs.append(transformed_var.detach().cpu().numpy())
+                except Exception as e:
+                    raise ValueError(f"Error applying transformation {i}: {e}")
+            
+            # Stack transformed variables into input matrix
+            actual_inputs_numpy = np.column_stack(transformed_inputs)
+            
+            # Store transformation info for later use in switch_to_equation
+            self._variable_transforms = variable_transforms
+            self._variable_names = variable_names
+            
+            print(f"🔄 Applied {len(variable_transforms)} variable transformations")
+            if variable_names:
+                print(f"   Variable names: {variable_names}")
+        else:
+            # Use original inputs
+            actual_inputs_numpy = actual_inputs.detach().cpu().numpy()
+            self._variable_transforms = None
+            self._variable_names = None
 
         timestamp = int(time.time())
         
         # Use same default parameters as MLP_SR
+        output_name = f"SR_output/{self.mlp_name}"
+        if save_path is not None:
+            output_name = f"{save_path}/{self.mlp_name}"
+        
         default_params = {
             "binary_operators": ["+", "*"],
             "unary_operators": ["inv(x) = 1/x", "sin", "exp"],
             "extra_sympy_mappings": {"inv": lambda x: 1/x},
             "niterations": 400,
             "complexity_of_operators": {"sin": 3, "exp": 3},
-            "output_directory": f"SR_output/{self.mlp_name}",
+            "output_directory": output_name,
         }
-        default_params.update(pysr_kwargs)
+        default_params.update(kwargs)
 
-        # Run SR for each active dimension
-        regressors = {}
-        for i, dim_idx in enumerate(active_dims):
-            print(f"🛠️ Running SR on active dimension {dim_idx} ({i+1}/{len(active_dims)})")
-            
-            run_id = f"dim{dim_idx}_{timestamp}"
-            params = {**default_params, "run_id": run_id}
-            
-            regressor = PySRRegressor(**params)
-            regressor.fit(inputs.detach().numpy(), active_output[:, i].detach().numpy())
-            regressors[dim_idx] = regressor
-            
-            best_eq = regressor.get_best()['equation']
-            print(f"💡Best equation for active dimension {dim_idx}: {best_eq}")
-            
-        # Store in the format expected by MLP_SR (replace entire dict, don't merge)
-        self.pysr_regressor = regressors
         # Set output_dims for compatibility
         self.output_dims = self.initial_dim
         
+        # Filter active dimensions based on output_dim parameter
+        if output_dim is not None:
+            if output_dim not in active_dims:
+                print(f"❗Requested output dimension {output_dim} is not active. Active dimensions: {active_dims}")
+                return {}
+            target_dims = [output_dim]
+        else:
+            target_dims = active_dims
+        
+        # Run SR for requested dimension(s)
+        regressors = {}
+        
+        if output_dim is not None:
+            # Single dimension case
+            print(f"🛠️ Running SR on active output dimension {output_dim}.")
+            
+            run_id = f"dim{output_dim}_{timestamp}"
+            params = {**default_params, "run_id": run_id}
+            
+            regressor = PySRRegressor(**params)
+            
+            # Find the index of this dimension in the active output
+            dim_index = active_dims.index(output_dim)
+            
+            if variable_names is not None:
+                regressor.fit(actual_inputs_numpy, active_output[:, dim_index].detach().cpu().numpy(), variable_names=variable_names)
+            else:
+                regressor.fit(actual_inputs_numpy, active_output[:, dim_index].detach().cpu().numpy())
+            
+            regressors[output_dim] = regressor
+            
+            best_eq = regressor.get_best()['equation']
+            print(f"💡Best equation for active dimension {output_dim}: {best_eq}")
+        
+        else:
+            # Multiple dimensions case
+            for i, dim_idx in enumerate(active_dims):
+                print(f"🛠️ Running SR on active dimension {dim_idx} ({i+1}/{len(active_dims)})")
+                
+                run_id = f"dim{dim_idx}_{timestamp}"
+                params = {**default_params, "run_id": run_id}
+                
+                regressor = PySRRegressor(**params)
+                
+                if variable_names is not None:
+                    regressor.fit(actual_inputs_numpy, active_output[:, i].detach().cpu().numpy(), variable_names=variable_names)
+                else:
+                    regressor.fit(actual_inputs_numpy, active_output[:, i].detach().cpu().numpy())
+                
+                regressors[dim_idx] = regressor
+                
+                best_eq = regressor.get_best()['equation']
+                print(f"💡Best equation for active dimension {dim_idx}: {best_eq}")
+        
+        # Store in the format expected by MLP_SR (merge with existing dict)
+        self.pysr_regressor = self.pysr_regressor | regressors
+        
         print(f"❤️ SR on {self.mlp_name} active dimensions complete.")
-        return regressors
+        
+        # For backward compatibility, return the regressor or dict of regressors
+        if output_dim is not None:
+            return regressors[output_dim]
+        else:
+            return regressors
 
     def switch_to_equation(self, complexity: list = None):
         """
@@ -402,16 +506,46 @@ class Pruning_MLP(MLP_SR):
                 
             f, vars_sorted = result
             
-            # Convert variable names to indices
-            var_indices = []
-            for var in vars_sorted:
-                var_str = str(var)
-                if var_str.startswith('x'):
-                    try:
-                        idx = int(var_str[1:])
-                        var_indices.append(idx)
-                    except ValueError:
-                        print(f"⚠️ Warning: Could not parse variable {var_str} for dimension {dim_idx}")
+            # Handle variable indices based on whether transformations were used
+            if hasattr(self, '_variable_transforms') and self._variable_transforms is not None:
+                # With transformations, variables are named by custom names or transform indices
+                var_indices = []
+                for var in vars_sorted:
+                    var_str = str(var)
+                    if self._variable_names:
+                        # Find the index based on custom variable names
+                        try:
+                            idx = self._variable_names.index(var_str)
+                            var_indices.append(idx)
+                        except ValueError:
+                            print(f"⚠️ Warning: Variable {var_str} not found in variable_names for dimension {dim_idx}")
+                            return
+                    else:
+                        # Variables named as x0, x1, etc. based on transform index
+                        if var_str.startswith('x'):
+                            try:
+                                idx = int(var_str[1:])
+                                var_indices.append(idx)
+                            except ValueError:
+                                print(f"⚠️ Warning: Could not parse variable {var_str} for dimension {dim_idx}")
+                                return
+                        else:
+                            print(f"⚠️ Warning: Unexpected variable format {var_str} for dimension {dim_idx}")
+                            return
+            else:
+                # Original behavior for non-transformed variables
+                var_indices = []
+                for var in vars_sorted:
+                    var_str = str(var)
+                    if var_str.startswith('x'):
+                        try:
+                            idx = int(var_str[1:])
+                            var_indices.append(idx)
+                        except ValueError:
+                            print(f"⚠️ Warning: Could not parse variable {var_str} for dimension {dim_idx}")
+                            return
+                    else:
+                        print(f"⚠️ Warning: Unexpected variable format {var_str} for dimension {dim_idx}")
                         return
             
             equation_funcs[dim_idx] = f
@@ -434,7 +568,21 @@ class Pruning_MLP(MLP_SR):
         print(f"✅ Successfully switched {self.mlp_name} to symbolic equations for {len(active_dims)} active dimensions:")
         for dim_idx in active_dims:
             print(f"   Dimension {dim_idx}: {equation_strs[dim_idx]}")
-            print(f"   Variables: {[f'x{i}' for i in equation_vars[dim_idx]]}")
+            
+            # Display variable names properly
+            var_names_display = []
+            if hasattr(self, '_variable_names') and self._variable_names is not None:
+                # Use custom variable names
+                for idx in equation_vars[dim_idx]:
+                    if idx < len(self._variable_names):
+                        var_names_display.append(self._variable_names[idx])
+                    else:
+                        var_names_display.append(f"transform_{idx}")
+            else:
+                # Use default x0, x1, etc. format
+                var_names_display = [f'x{i}' for i in equation_vars[dim_idx]]
+            
+            print(f"   Variables: {var_names_display}")
         
         print(f"🎯 Active dimensions {active_dims} now using symbolic equations.")
         print(f"🔒 Inactive dimensions will output zeros.")
@@ -477,12 +625,26 @@ class Pruning_MLP(MLP_SR):
                     
                     # Extract variables needed for this dimension
                     selected_inputs = []
-                    for idx in var_indices:
-                        if idx < x.shape[1]:
-                            selected_inputs.append(x[:, idx])
-                        else:
-                            print(f"⚠️ Variable x{idx} not available for dimension {dim_idx}")
-                            continue
+                    
+                    if hasattr(self, '_variable_transforms') and self._variable_transforms is not None:
+                        # Apply transformations and select needed variables
+                        for idx in var_indices:
+                            if idx < len(self._variable_transforms):
+                                transformed_var = self._variable_transforms[idx](x)
+                                if transformed_var.dim() > 1:
+                                    transformed_var = transformed_var.flatten()
+                                selected_inputs.append(transformed_var)
+                            else:
+                                print(f"⚠️ Equation for dimension {dim_idx} requires transform {idx} but only {len(self._variable_transforms)} transforms available")
+                                continue
+                    else:
+                        # Original behavior - extract by column index
+                        for idx in var_indices:
+                            if idx < x.shape[1]:
+                                selected_inputs.append(x[:, idx])
+                            else:
+                                print(f"⚠️ Variable x{idx} not available for dimension {dim_idx}")
+                                continue
                     
                     if len(selected_inputs) == len(var_indices):
                         # Convert to numpy for the equation function
